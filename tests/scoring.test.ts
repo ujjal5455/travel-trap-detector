@@ -403,6 +403,67 @@ describe("reasons", () => {
   });
 });
 
+describe("official fixed fares", () => {
+  const fixedFare = {
+    id: "ff",
+    areaId: "test-area",
+    serviceType: "auto" as const,
+    originName: "LGBI Airport",
+    originLat: PICKUP.lat,
+    originLng: PICKUP.lng,
+    originRadiusM: 2500,
+    destName: "Paltan Bazaar",
+    destLat: 26.17,
+    destLng: 91.75,
+    destRadiusM: 1500,
+    fare: 580,
+    listedKm: 25,
+    source: "official" as const,
+    sourceNote: "AAI prepaid taxi list (DTO notification, 20 Nov 2019)",
+  };
+
+  it("replaces the rate card, with no minimum fare or night rate", () => {
+    const v = scoreFare(input({ fixedFare, quotedPrice: 1160, tripTime: ist(23) }));
+    expect(v.expectedFare).toBe(580);
+    expect(v.ratio).toBe(2);
+    expect(v.verdict).toBe("HIGH_RISK");
+    expect(v.reasons.some((r) => r.includes("Night rate"))).toBe(false);
+  });
+
+  it("says where the number comes from and marks the source official", () => {
+    const v = scoreFare(input({ fixedFare, quotedPrice: 580 }));
+    expect(v.reasons).toContain("The official fixed fare from LGBI Airport to Paltan Bazaar is ₹580 (about 25 km).");
+    expect(v.benchmarkSource).toBe("official");
+    expect(v.fixedFare).toEqual({
+      origin: "LGBI Airport",
+      destination: "Paltan Bazaar",
+      fare: 580,
+      listedKm: 25,
+      sourceNote: "AAI prepaid taxi list (DTO notification, 20 Nov 2019)",
+    });
+  });
+
+  it("counts as local data for confidence, even with the regional default benchmark", () => {
+    const v = scoreFare(input({ fixedFare, benchmark: { ...AUTO, areaId: null } }));
+    expect(v.confidence).toBe("MEDIUM");
+    expect(v.reasons.some((r) => r.includes("regional default"))).toBe(false);
+  });
+
+  it("is still blended with traveller reports and still escalated by nearby scam reports", () => {
+    const blended = scoreFare(input({ fixedFare, communityReports: reports(10, { paidPrice: 780 }) }));
+    expect(blended.expectedFare).toBe(680); // 0.5 × 580 + 0.5 × 780
+    expect(blended.reasons).toContain("Expected fare blends the official fare with 10 recent traveller reports for similar trips (median ₹780).");
+    const escalated = scoreFare(input({ fixedFare, quotedPrice: 600, scamReports: [scam("a"), scam("b"), scam("c")] }));
+    expect(escalated.verdict).toBe("SUSPICIOUS");
+  });
+
+  it("is ignored when it is for a different service", () => {
+    const v = scoreFare(input({ fixedFare: { ...fixedFare, serviceType: "taxi" } }));
+    expect(v.expectedFare).toBe(100);
+    expect(v.fixedFare).toBeNull();
+  });
+});
+
 describe("selectBenchmark", () => {
   const regionalAuto = { ...AUTO, id: "r-auto", areaId: null };
   const all = [AUTO, regionalAuto, GUIDE];

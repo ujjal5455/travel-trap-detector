@@ -14,6 +14,7 @@ const EXPECTED: Record<string, { seed: number; exact: boolean }> = {
   reports: { seed: 100, exact: false }, // 100 seed reports + whatever users have added
   report_votes: { seed: 0, exact: false },
   fare_checks: { seed: 0, exact: false },
+  fixed_fares: { seed: 94, exact: true }, // supabase/seed-fixed-fares.sql
 };
 
 const HOTSPOTS = ["Guwahati Railway Station", "LGBI Airport (Terminal 1)"];

@@ -21,7 +21,7 @@ const pack: OfflinePack = {
     { id: "kaziranga", name: "Kaziranga (Kohora)", state: "Assam", centerLat: 26.5869979, centerLng: 93.4105813, radiusKm: 45 },
   ],
   places: [],
-  benchmarks: [b("guwahati", "auto", 40, 18, 50, 1.25), b("guwahati", "taxi", 100, 22, 200, 1.25), guide("kaziranga", 1000, 1800)],
+  benchmarks: [b("guwahati", "auto", 40, 18, 50, 1.25), b("guwahati", "taxi", 70, 20.34, 190, 1), guide("kaziranga", 1000, 1800)],
 };
 
 /** Road distances measured with OpenRouteService / OSRM for these routes. */

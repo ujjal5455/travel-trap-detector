@@ -126,6 +126,16 @@ export const fareVerdictSchema = z.object({
   }),
   confidence: z.enum(CONFIDENCE_LEVELS),
   reasons: z.array(z.string().max(400)).max(12),
+  fixedFare: z
+    .object({
+      origin: z.string().max(120),
+      destination: z.string().max(120),
+      fare: z.number().positive().max(1_000_000),
+      listedKm: z.number().positive().max(5_000).nullable(),
+      sourceNote: z.string().max(400).nullable(),
+    })
+    .nullable()
+    .optional(),
 });
 
 export const explainRequestSchema = z.object({ verdict: fareVerdictSchema });

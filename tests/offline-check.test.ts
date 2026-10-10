@@ -52,6 +52,24 @@ describe("offlineCheck", () => {
     expect(far.verdict.confidence).toBe("LOW");
   });
 
+  it("uses an official fixed fare saved in the pack", () => {
+    const AIRPORT = { lat: 26.1054933, lng: 91.5881147 };
+    const withFixed: OfflinePack = {
+      ...pack,
+      benchmarks: [...pack.benchmarks, { ...pack.benchmarks[0], id: "t", serviceType: "taxi", baseFare: 70, perKmRate: 20.34, minFare: 190, source: "official" }],
+      fixedFares: [
+        { id: "f", areaId: "guwahati", serviceType: "taxi", originName: "LGBI Airport", originLat: AIRPORT.lat, originLng: AIRPORT.lng, originRadiusM: 2500,
+          destName: "Paltan Bazaar", destLat: STATION.lat, destLng: STATION.lng, destRadiusM: 1500, fare: 580, listedKm: 25, source: "official", sourceNote: null },
+      ],
+    };
+    const t = offlineCheck(withFixed, { serviceType: "taxi", pickup: AIRPORT, drop: STATION, quotedPrice: 600, tripTime: NOON });
+    expect(t.verdict.expectedFare).toBe(580);
+    expect(t.verdict.fixedFare?.destination).toBe("Paltan Bazaar");
+    expect(t.verdict.verdict).toBe("FAIR");
+    // Packs saved before fixed fares existed still work.
+    expect(offlineCheck(pack, { serviceType: "auto", pickup: STATION, drop: KAMAKHYA, quotedPrice: 150 }).verdict.fixedFare).toBeNull();
+  });
+
   it("prices guides by session with no distance", () => {
     const g = offlineCheck(pack, { serviceType: "guide", pickup: STATION, sessionType: "half_day", quotedPrice: 1000 });
     expect(g.verdict.expectedFare).toBe(1000);

@@ -1,6 +1,7 @@
 // Fare check without a connection: same scoring engine, run in the browser on the saved offline pack.
 // Distance is Haversine × 1.3, there is no community data, and the explanation is the template.
 import { estimateDistance } from "./distance";
+import { matchFixedFare } from "./fixed-fares";
 import { templateExplanation } from "./explain";
 import { nearestArea } from "./geo";
 import { scoreFare, selectBenchmark } from "./scoring";
@@ -34,6 +35,8 @@ export function offlineCheck(pack: OfflinePack, req: OfflineCheckRequest, now: D
     tripTime,
     now,
     benchmark: selectBenchmark(pack.benchmarks, area?.id ?? null, req.serviceType),
+    // Packs saved before fixed fares existed have none.
+    fixedFare: matchFixedFare(pack.fixedFares ?? [], req.serviceType, req.pickup, req.drop),
     communityReports: [],
     scamReports: [],
   });

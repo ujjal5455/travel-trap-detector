@@ -104,6 +104,14 @@ export function VerdictCard({
           </p>
         </div>
 
+        {v.fixedFare && (
+          <p role="note" className="rounded-xl border-2 border-line px-3 py-2 text-sm">
+            <span className="font-semibold">Official prepaid fare:</span> {formatINR(v.fixedFare.fare)} from{" "}
+            {v.fixedFare.origin} to {v.fixedFare.destination}
+            {v.fixedFare.sourceNote && <span className="mt-0.5 block text-xs text-muted">{v.fixedFare.sourceNote}</span>}
+          </p>
+        )}
+
         <div className="flex flex-wrap gap-1.5">
           <Badge tone={v.benchmarkSource === "demo_estimate" ? "warn" : "neutral"}>{SOURCE_LABELS[v.benchmarkSource]}</Badge>
           <Badge>{CONFIDENCE_LABELS[v.confidence]}</Badge>

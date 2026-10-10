@@ -1,11 +1,12 @@
 import { COMMUNITY_BLEND, COMMUNITY_ESCALATION } from "@/lib/config";
 import { getDistance } from "@/lib/distance";
+import { matchFixedFare } from "@/lib/fixed-fares";
 import { templateExplanation } from "@/lib/explain";
 import { boundingBox, nearestArea } from "@/lib/geo";
 import { rateLimitError, windowStart } from "@/lib/rate-limit";
 import { scoreFare, ScoringInputError, selectBenchmark } from "@/lib/scoring";
 import { readDeviceId } from "@/lib/server/device";
-import { getAreas, getBenchmarks } from "@/lib/server/reference-data";
+import { getAreas, getBenchmarks, getFixedFaresOrNone } from "@/lib/server/reference-data";
 import {
   countFareChecksSince,
   insertFareCheck,
@@ -36,9 +37,10 @@ export async function POST(request: Request) {
     if (limited) return error(429, limited, { "Retry-After": "600" });
 
     const isGuide = body.serviceType === "guide";
-    const [areas, benchmarks, distance] = await Promise.all([
+    const [areas, benchmarks, fixedFares, distance] = await Promise.all([
       getAreas(),
       getBenchmarks(),
+      getFixedFaresOrNone(),
       isGuide || !body.drop
         ? Promise.resolve(null)
         : getDistance(body.pickup, body.drop, {
@@ -71,6 +73,7 @@ export async function POST(request: Request) {
       tripTime,
       now,
       benchmark,
+      fixedFare: matchFixedFare(fixedFares, body.serviceType, body.pickup, body.drop),
       communityReports,
       scamReports,
     });

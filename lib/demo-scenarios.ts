@@ -47,15 +47,16 @@ export const DEMO_SCENARIOS: DemoScenario[] = [
   {
     id: "suspicious-airport-taxi",
     title: "Suspicious airport taxi",
-    point: "ISBT → Guwahati airport, quoted ₹750: above the usual fare, blended with traveller reports.",
+    point: "ISBT → Guwahati airport, quoted ₹660: above the official per-km taxi rate, blended with traveller reports.",
     expect: "SUSPICIOUS",
     serviceType: "taxi",
     // Pickup away from the airport hotspot; a pickup at the airport itself would escalate to High risk.
     pickup: ISBT,
     drop: AIRPORT,
     sessionType: null,
-    // Expected ≈ ₹592 by road with traveller reports (1.27×) or ₹483 estimated (1.55×)
-    quotedPrice: 750,
+    // Official rate ₹70 + ₹20.34/km: expected ≈ ₹525 by road with traveller reports (1.26×),
+    // ₹515 without them (1.28×), or ₹424 estimated (1.55×)
+    quotedPrice: 660,
   },
   {
     id: "high-risk-station",

@@ -6,7 +6,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { normalizeSupabaseUrl } from "../lib/supabase-url";
 
-const TABLES = ["areas", "places", "fare_benchmarks", "reports", "report_votes", "fare_checks"];
+const TABLES = ["areas", "places", "fare_benchmarks", "fixed_fares", "reports", "report_votes", "fare_checks"];
 
 async function main() {
   try {

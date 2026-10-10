@@ -65,7 +65,8 @@ export default function AboutPage() {
               <strong>Rate card.</strong> Each area has a rate for each kind of ride:
               <Formula>expected = max(minimum fare, base fare + per-km rate × km)</Formula>
               Between {night} (India time) it&apos;s multiplied by that area&apos;s night rate, for example ×1.25. Guides
-              have a fixed half-day or full-day rate instead.
+              have a fixed half-day or full-day rate instead. If an official fixed fare covers your exact route (for
+              example a Guwahati airport prepaid taxi to Paltan Bazaar), that fare is used instead and the card says so.
             </li>
             <li>
               <strong>What travellers paid.</strong> If there are at least {COMMUNITY_BLEND.minSamples} reports of similar
@@ -138,9 +139,16 @@ export default function AboutPage() {
               <span className="mr-1 rounded-full border border-suspicious/40 bg-suspicious-soft px-2 py-0.5 text-xs font-medium text-suspicious">
                 Demo estimate
               </span>
-              <strong>Rate cards.</strong> In this prototype every rate is a <strong>placeholder</strong> we chose to be
-              plausible, not an official fare. The badge on each verdict says so. When a rate is replaced with an official
-              chart, the badge changes to &ldquo;Official fare chart&rdquo; and names the source.
+              <strong>Rate cards.</strong> Most rates in this prototype are <strong>placeholders</strong> we chose to be
+              plausible, not official fares. The badge on each verdict says so.
+            </li>
+            <li>
+              <span className="mr-1 rounded-full border border-line px-2 py-0.5 text-xs font-medium">Official fare chart</span>
+              <strong>Guwahati taxis.</strong> The Airports Authority of India publishes the prepaid taxi fares from Guwahati
+              airport (set by the District Transport Office, Kamrup Metro, 20 Nov 2019). We use those fares exactly for 94
+              listed destinations, and the Guwahati taxi per-km rate (₹70 + ₹20.34 per km, minimum ₹190) is fitted to the
+              same list. A few listed places are left out because we couldn&apos;t place them on the map reliably, or their fare
+              didn&apos;t match their distance.
             </li>
             <li>
               <strong>Traveller reports.</strong> What people tell us they paid, plus 100 clearly marked synthetic reports
@@ -170,7 +178,8 @@ export default function AboutPage() {
         <Section id="limits" title="What we can't know (yet)">
           <ul className="list-disc space-y-1 pl-5">
             <li>
-              <strong>Placeholder rates.</strong> Until official fare charts are added, verdicts are a guide, not a ruling.
+              <strong>Placeholder rates.</strong> Apart from Guwahati taxis, rates are placeholders until official fare charts
+              are added, so verdicts are a guide, not a ruling. The official taxi fares date from 2019 and may have been revised.
             </li>
             <li>
               <strong>The device ID can be faked.</strong> Someone determined could pose as several travellers. Rate limits and

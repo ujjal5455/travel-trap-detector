@@ -11,6 +11,8 @@ import type {
   FareBenchmark,
   FareBenchmarkRow,
   FareVerdict,
+  FixedFare,
+  FixedFareRow,
   Place,
   PlaceRow,
   ReportRow,
@@ -49,6 +51,26 @@ export function toBenchmark(row: FareBenchmarkRow): FareBenchmark {
     nightStart: row.night_start,
     nightEnd: row.night_end,
     sessionRates: row.session_rates,
+    source: row.source,
+    sourceNote: row.source_note,
+  };
+}
+
+export function toFixedFare(row: FixedFareRow): FixedFare {
+  return {
+    id: row.id,
+    areaId: row.area_id,
+    serviceType: row.service_type,
+    originName: row.origin_name,
+    originLat: row.origin_lat,
+    originLng: row.origin_lng,
+    originRadiusM: row.origin_radius_m,
+    destName: row.dest_name,
+    destLat: row.dest_lat,
+    destLng: row.dest_lng,
+    destRadiusM: row.dest_radius_m,
+    fare: Number(row.fare),
+    listedKm: num(row.listed_km),
     source: row.source,
     sourceNote: row.source_note,
   };
@@ -115,6 +137,16 @@ export async function listBenchmarks(): Promise<FareBenchmark[]> {
     .overrideTypes<FareBenchmarkRow[], { merge: false }>();
   if (error) throw new Error(`listBenchmarks: ${error.message}`);
   return data.map(toBenchmark);
+}
+
+export async function listFixedFares(): Promise<FixedFare[]> {
+  const { data, error } = await getSupabase()
+    .from("fixed_fares")
+    .select("*")
+    .order("dest_name")
+    .overrideTypes<FixedFareRow[], { merge: false }>();
+  if (error) throw new Error(`listFixedFares: ${error.message}`);
+  return data.map(toFixedFare);
 }
 
 /** Non-scam reports with a paid price for the area + service since `since` (scoring filters further). */

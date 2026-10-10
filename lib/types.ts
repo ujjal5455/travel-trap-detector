@@ -75,6 +75,28 @@ export interface FareBenchmark {
   sourceNote: string | null;
 }
 
+/** An official fixed fare for one route, e.g. the airport prepaid taxi to Paltan Bazaar. */
+export interface FixedFare {
+  id: string;
+  areaId: string | null;
+  serviceType: ServiceType;
+  originName: string;
+  originLat: number;
+  originLng: number;
+  /** A trip matches when its pickup is within this many metres of the origin… */
+  originRadiusM: number;
+  destName: string;
+  destLat: number;
+  destLng: number;
+  /** …and its drop is within this many metres of the destination. */
+  destRadiusM: number;
+  fare: number;
+  /** Distance printed on the official list, if any */
+  listedKm: number | null;
+  source: BenchmarkSource;
+  sourceNote: string | null;
+}
+
 // ---------------------------------------------------------------------------
 // Table row types: exactly what PostgREST returns (snake_case, timestamps as ISO strings).
 // Keep in sync with supabase/migrations.
@@ -109,6 +131,25 @@ export interface FareBenchmarkRow {
   night_start: number;
   night_end: number;
   session_rates: Record<SessionType, number> | null;
+  source: BenchmarkSource;
+  source_note: string | null;
+  updated_at: string;
+}
+
+export interface FixedFareRow {
+  id: string;
+  area_id: string | null;
+  service_type: ServiceType;
+  origin_name: string;
+  origin_lat: number;
+  origin_lng: number;
+  origin_radius_m: number;
+  dest_name: string;
+  dest_lat: number;
+  dest_lng: number;
+  dest_radius_m: number;
+  fare: number;
+  listed_km: number | null;
   source: BenchmarkSource;
   source_note: string | null;
   updated_at: string;
@@ -193,6 +234,8 @@ export interface OfflinePack {
   areas: Area[];
   places: Place[];
   benchmarks: FareBenchmark[];
+  /** Optional: packs saved before fixed fares existed don't have it */
+  fixedFares?: FixedFare[];
 }
 
 /** POST /api/check response */
@@ -306,4 +349,12 @@ export interface FareVerdict {
   nearbyScam: { count: number; distinctDevices: number; topTags: ScamTag[] };
   confidence: Confidence;
   reasons: string[];
+  /** Set when an official fixed fare for this exact route replaced the rate card. */
+  fixedFare?: {
+    origin: string;
+    destination: string;
+    fare: number;
+    listedKm: number | null;
+    sourceNote: string | null;
+  } | null;
 }

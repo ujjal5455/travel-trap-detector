@@ -76,7 +76,7 @@ The four demo scenarios are built to give the same verdict every time: Fair, Sus
 ## How a fare is checked
 
 1. **Distance.** Road distance from OpenRouteService. If that isn't available, straight line × 1.3, labelled "estimate".
-2. **Rate card.** `expected = max(minimum fare, base fare + per-km rate × km)`, × the night multiplier between 22:00 and 05:00 IST. Guides have half-day and full-day rates.
+2. **Rate card.** `expected = max(minimum fare, base fare + per-km rate × km)`, × the night multiplier between 22:00 and 05:00 IST. Guides have half-day and full-day rates. If an **official fixed fare** covers the exact route (Guwahati airport prepaid taxis), that fare is used instead.
 3. **What travellers paid.** With at least 5 similar reports (same area and ride type, distance within ±20 %, last 180 days, not scams), each scaled to your distance:
    `expected = (1 − w) × rate card + w × median paid`, with `w = min(0.5, reports ÷ 20)`.
 4. **Verdict.** `quote ÷ expected`: up to **1.20** Fair · up to **1.60** Suspicious · above that **High risk**.
@@ -88,7 +88,8 @@ All thresholds live in [`lib/config.ts`](lib/config.ts); the scoring engine is a
 
 ## Data honesty
 
-- **Rate cards are placeholders.** Every rate in this prototype is a plausible demo value, shown with a **"Demo estimate"** badge on every verdict. Replacing them with official fare charts means editing one table in [`supabase/seed.sql`](supabase/seed.sql); the badge then reads "Official fare chart".
+- **Guwahati taxi fares are official.** The [Airports Authority of India prepaid taxi list](https://www.aai.aero/en/airports/transport-details/guwahati/Taxi) for Guwahati airport (DTO Kamrup Metro notification of 20 Nov 2019) is used exactly for 94 destinations ([`supabase/seed-fixed-fares.sql`](supabase/seed-fixed-fares.sql)), and the Guwahati taxi per-km rate (₹70 + ₹20.34/km, minimum ₹190) is fitted to it: every listed local fare is within ₹78 of the fit. Twelve listed places without a reliable map point, and two whose fare doesn't match their distance, are left out (listed in that file).
+- **Other rate cards are placeholders.** Every other rate is a plausible demo value, shown with a **"Demo estimate"** badge on every verdict. Replacing one means editing one row in [`supabase/seed.sql`](supabase/seed.sql), including its source; the badge then reads "Official fare chart".
 - **Seed reports are synthetic.** The 100 starter reports (`is_seed = true`) exist to demonstrate the community features, including the two Guwahati hotspots.
 - **Places** come from OpenStreetMap. A few points are approximate (which Guwahati airport terminal handles arrivals, Pakyong airport, the centre of Police Bazar).
 - **Translations** on the driver card are first drafts awaiting review by native speakers.
@@ -161,7 +162,7 @@ npm install
 cp .env.example .env.local      # fill in the values below
 ```
 
-1. **Database:** create a free Supabase project. In **SQL Editor**, run [`supabase/migrations/001_init.sql`](supabase/migrations/001_init.sql), then [`supabase/seed.sql`](supabase/seed.sql).
+1. **Database:** create a free Supabase project. In **SQL Editor**, run [`supabase/migrations/001_init.sql`](supabase/migrations/001_init.sql) and [`002_fixed_fares.sql`](supabase/migrations/002_fixed_fares.sql), then [`supabase/seed.sql`](supabase/seed.sql) and [`seed-fixed-fares.sql`](supabase/seed-fixed-fares.sql).
 2. **Check it:** `npm run db:check` should end with "All checks passed".
 3. **Run:** `npm run dev`, then open http://localhost:3000.
 4. **Deploy:** follow [docs/DEPLOY.md](docs/DEPLOY.md) (GitHub → Vercel, environment variables, security checks, phone test checklist).
@@ -192,7 +193,7 @@ cp .env.example .env.local      # fill in the values below
 
 ## Known limitations
 
-- **Placeholder rate cards.** Verdicts are a guide until official fare charts are added.
+- **Placeholder rate cards.** Apart from Guwahati taxis, verdicts are a guide until official fare charts are added. The official taxi fares date from 2019 and may have been revised since.
 - **Device IDs can be faked.** One person could pose as several travellers. Rate limits and the 3-traveller rule reduce, but don't remove, this risk.
 - **Small community sample.** Real reports are few so far, so most checks lean on the rate card.
 - **Hill roads.** If road distance is unavailable, the straight-line estimate can be about half the real distance around Gangtok and Tawang.

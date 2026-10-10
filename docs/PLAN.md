@@ -233,7 +233,7 @@ Notes: a refused connection takes ~2 s to fail on Windows, so the server-down fa
 Built to the user's phase 11 spec.
 
 - [x] `/about`: plain-language steps, formulas and thresholds rendered from `lib/config.ts` (a test renders the page and checks the config values appear), data sources with honesty labels, privacy, known limitations
-- [x] Demo mode: "Try a demo" on the home page fills the form (service, places, 12:00 India time via `noonInIndiaToday`, quote). Four scenarios in `lib/demo-scenarios.ts`: fair auto (Fancy Bazaar → Kamakhya ₹130), suspicious airport taxi (ISBT → airport ₹750; the pickup avoids the airport hotspot, which would escalate), high-risk station ride (₹400), Kaziranga full-day guide (₹2,400 → Suspicious). Quotes chosen to hold with road or estimated distance; unit-tested both ways and verified live.
+- [x] Demo mode: "Try a demo" on the home page fills the form (service, places, 12:00 India time via `noonInIndiaToday`, quote). Four scenarios in `lib/demo-scenarios.ts`: fair auto (Fancy Bazaar → Kamakhya ₹130), suspicious airport taxi (ISBT → airport ₹750, later ₹660 with the official rate; the pickup avoids the airport hotspot, which would escalate), high-risk station ride (₹400), Kaziranga full-day guide (₹2,400 → Suspicious). Quotes chosen to hold with road or estimated distance; unit-tested both ways and verified live.
 - [x] Accessibility: global `:focus-visible` ring, reduced-motion support, fair/suspicious colours darkened for margin (6.5:1 and 6.4:1 on their tints; every colour pair ≥ 4.5:1), DOM audit of the verdict card, report form (scam mode) and map popup: no unnamed controls
 - [x] Performance: `experimental.inlineCss` (no render-blocking CSS; pages 10–25 KB gzipped), offline pack fetched when idle, map no longer asks for location on load ("Use my location" button; auto-centres only if already granted), preconnect to the OSM tile server
 - [x] Lighthouse mobile (production build): home 92 / 100 / 100 / 100, about 98 / 100 / 100 / 100, report 99 / 100 / 100 / 100, map 88 / 100 / 96 / 100 (perf / a11y / best practices / SEO). Map LCP is a third-party OSM tile, and its remaining best-practice item is OSM's low-resolution tiles.
@@ -256,6 +256,16 @@ Not fixed (by design or third party): API JSON isn't gzipped by `next start` loc
 - [x] Commit `phase 12: deploy readiness and security checks`
 
 Live URL: https://travel-trap-detector.vercel.app
+
+### After phase 12: official Guwahati taxi fares (AAI)
+Source: the [AAI Guwahati airport prepaid taxi list](https://www.aai.aero/en/airports/transport-details/guwahati/Taxi) (DTO Kamrup Metro notification TMV.195/2010/352-A, 20 Nov 2019).
+- [x] `fixed_fares` table (`supabase/migrations/002_fixed_fares.sql`, RLS on, service_role only) and `supabase/seed-fixed-fares.sql`: 94 airport → destination fares copied exactly; destination points from Nominatim, checked by hand. Left out: 12 places with no reliable map point, Missamari and Tinsukia (fare doesn't match listed km, likely typos), the Bhutan destinations; Dispur GNRC merged into Six Mile GNRC.
+- [x] Guwahati taxi rate card is now `official`: ₹70 + ₹20.34/km, minimum ₹190, no night rate, a least-squares fit to the 73 local destinations (every fare within ₹78). Other rate cards stay `demo_estimate`; `seed.sql` now carries a source and note per row.
+- [x] Scoring: `lib/fixed-fares.ts` `matchFixedFare` (pickup within the origin radius, drop within the destination radius, nearest destination wins). A match replaces step 1 (no minimum, no night rate), counts as area-specific for confidence, and adds a reason; blend and escalation are unchanged. Used by `/api/check` and the offline pack (older packs without fixed fares still work). If the table is missing, checks fall back to rate cards.
+- [x] Verdict card shows "Official prepaid fare" with the source; the template explanation names the fare and suggests the prepaid counter; the AI sees `officialFixedFare` and the number guard covers it.
+- [x] Demo 2 retuned to ₹660 (ISBT → airport): 1.26–1.28× by road, 1.55× estimated → Suspicious.
+- [x] About, README, SPEC updated; `db:check` expects 94 fixed fares; `rls:check` covers the new table.
+- [ ] User runs `002_fixed_fares.sql`, `seed-fixed-fares.sql` and `seed.sql` again in Supabase, then the live demos are re-verified
 
 ---
 

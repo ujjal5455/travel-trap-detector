@@ -49,6 +49,9 @@ reports          id, device_id, area_id, service_type, pickup_lat, pickup_lng, d
                  description, photo_path, is_seed bool, created_at
 report_votes     report_id, device_id, created_at   -- primary key (report_id, device_id)
 fare_checks      id, device_id, area_id, service_type, distance_km, quoted_price, verdict, ratio, created_at
+fixed_fares      id, area_id, service_type, origin_name, origin_lat, origin_lng, origin_radius_m,
+                 dest_name, dest_lat, dest_lng, dest_radius_m, fare, listed_km,
+                 source, source_note, updated_at   -- official route fares, e.g. the AAI airport prepaid taxi list
 ```
 
 - `service_type`: auto | taxi | bike_taxi | shared_sumo | guide. Guides use per_session pricing (half_day or full_day) and have no drop point.
@@ -63,12 +66,13 @@ Implemented in `lib/scoring.ts` as a pure function with full unit tests. All thr
    - per_km: `max(min_fare, base_fare + per_km_rate × distance_km)`, multiplied by `night_multiplier` when the trip time falls in the night window (the window can cross midnight).
    - per_session: `session_rates[session_type]`.
    - Use the area's benchmark. If the area has none, or the point is outside every area, use the regional default (area_id null).
+   - **Official fixed fare.** If a `fixed_fares` row matches (same service, pickup within `origin_radius_m` of its origin, drop within `dest_radius_m` of its destination; closest destination wins), its `fare` replaces the rate-card result: no minimum fare and no night multiplier. It counts as area-specific for confidence, sets `benchmarkSource`, and adds a reason naming the route. Steps 2–7 apply unchanged. (`lib/fixed-fares.ts`)
 2. **Community blend.** Take reports with the same area and service type, distance within ±20% (or the same session type for guides), from the last 180 days, where `is_scam = false`. Scale each paid price to the current trip: `paid_price × (distance_km / report.distance_km)`. If there are at least 5 samples: `expected = (1 − w) × benchmark_expected + w × median(scaled)`, where `w = min(0.5, n / 20)`. Below 5 samples, ignore the community data.
 3. **Ratio** = quoted_price ÷ expected. ratio ≤ 1.20 → FAIR. ratio ≤ 1.60 → SUSPICIOUS. ratio > 1.60 → HIGH_RISK.
 4. **Community escalation.** If there are at least 3 `is_scam` reports within 500 m of the pickup in the last 90 days, from at least 3 distinct device_ids, raise the verdict one level (FAIR → SUSPICIOUS, SUSPICIOUS → HIGH_RISK, never beyond HIGH_RISK) and add a reason saying why.
 5. **Fair range** = [expected × 0.90, expected × 1.15], each rounded to the nearest ₹10.
 6. **Confidence.** HIGH = area-specific benchmark and at least 5 community samples. MEDIUM = area-specific benchmark only. LOW = regional default. (Data source is shown separately as a badge.)
-7. **Output** (`FareVerdict` type): verdict, ratio, expectedFare, fairRange, distanceKm, distanceMethod, benchmarkSource, communitySampleSize, nearbyScam { count, distinctDevices, topTags }, confidence, reasons: string[].
+7. **Output** (`FareVerdict` type): verdict, ratio, expectedFare, fairRange, distanceKm, distanceMethod, benchmarkSource, communitySampleSize, nearbyScam { count, distinctDevices, topTags }, confidence, reasons: string[], fixedFare { origin, destination, fare, listedKm, sourceNote } | null.
    `reasons` are short factual sentences built in code, for example: "Quoted ₹600 is 2.1× the expected ₹285 for a 6.2 km auto ride."
 
 ## AI explanation rules (`lib/explain.ts`)
@@ -100,6 +104,7 @@ Implemented in `lib/scoring.ts` as a pure function with full unit tests. All thr
 - Never collect or display driver names, phone numbers or vehicle registration numbers. Flag patterns and places, never individuals.
 - Evidence photos go to a private Storage bucket. The UI shows only "evidence attached", never the photo itself.
 - Seed benchmark values are placeholders: `source = 'demo_estimate'`, `source_note = 'Replace with official fare chart'`. The UI must show a "Demo estimate" badge for them. Never label invented numbers as official.
+- Exception, with a cited source: Guwahati taxi is `official`, fitted to the AAI Guwahati airport prepaid taxi list (DTO Kamrup Metro notification TMV.195/2010/352-A, 20 Nov 2019), whose fares are also stored exactly in `fixed_fares` (`supabase/seed-fixed-fares.sql`).
 - Seed reports have `is_seed = true`.
 - Rate limits: max 5 reports and max 30 fare checks per device per hour.
 

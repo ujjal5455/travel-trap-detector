@@ -109,6 +109,25 @@ describe("templateExplanation", () => {
     }
   });
 
+  it("names the official prepaid fare when one applies, and suggests the airport counter", () => {
+    const official: FareVerdict = {
+      ...base,
+      verdict: "SUSPICIOUS",
+      quotedPrice: 800,
+      ratio: 1.38,
+      expectedFare: 580,
+      fairRange: { min: 520, max: 670 },
+      distanceKm: 23.4,
+      benchmarkSource: "official",
+      fixedFare: { origin: "LGBI Airport", destination: "Paltan Bazaar", fare: 580, listedKm: 25, sourceNote: "AAI list" },
+    };
+    const e = templateExplanation(official);
+    expect(e.text).toContain("The official airport prepaid fare to Paltan Bazaar is ₹580, so a fair price is about ₹520–₹670.");
+    expect(e.tip).toMatch(/prepaid taxi counter/);
+    expect(unexpectedNumbers(`${e.text} ${e.tip}`, explanationFacts(official))).toEqual([]);
+    expect(explanationFacts(official).officialFixedFare).toEqual({ from: "LGBI Airport", to: "Paltan Bazaar", fare: 580, listedKm: 25 });
+  });
+
   it("always passes its own number guard", () => {
     for (const v of [base, highRisk, { ...highRisk, verdict: "SUSPICIOUS" as const }, { ...base, ratio: 0.5, quotedPrice: 80 }]) {
       const e = templateExplanation(v);

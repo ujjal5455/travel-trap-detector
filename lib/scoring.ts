@@ -17,6 +17,7 @@ import {
   type DistanceMethod,
   type FareBenchmark,
   type FareVerdict,
+  type FixedFare,
   type LatLng,
   type ScamTag,
   type ServiceType,
@@ -60,6 +61,8 @@ export interface ScoreInput {
   communityReports: readonly ReportSample[];
   /** Candidate scam reports near the pickup (filtered again here). */
   scamReports: readonly ReportSample[];
+  /** An official fixed fare for this exact route (matchFixedFare); replaces the rate card in step 1. */
+  fixedFare?: FixedFare | null;
 }
 
 export class ScoringInputError extends Error {
@@ -210,12 +213,16 @@ export function scoreFare(input: ScoreInput): FareVerdict {
   const reasons: string[] = [];
   const isPerKm = b.pricingUnit === "per_km";
 
-  // 1. Expected fare from the benchmark.
+  // 1. Expected fare: an official fixed fare for this exact route if there is one, otherwise the rate card.
+  const fixed = input.fixedFare && input.fixedFare.serviceType === input.serviceType ? input.fixedFare : null;
   const {
     expected: benchmarkExpected,
     minFareApplied,
     nightApplied,
-  } = benchmarkExpectedFare(b, input.distanceKm, input.sessionType, input.tripTime);
+  } = fixed
+    ? { expected: fixed.fare, minFareApplied: false, nightApplied: false }
+    : benchmarkExpectedFare(b, input.distanceKm, input.sessionType, input.tripTime);
+  const baseName = fixed ? "official fare" : "rate card";
 
   // 2. Community blend.
   const samples = communitySamples(input);
@@ -244,8 +251,8 @@ export function scoreFare(input: ScoreInput): FareVerdict {
     max: roundToNearest(expectedFare * FAIR_RANGE.highFactor, FAIR_RANGE.roundTo),
   };
 
-  // 6. Confidence.
-  const areaSpecific = b.areaId !== null;
+  // 6. Confidence. An official route fare counts as local data.
+  const areaSpecific = fixed !== null || b.areaId !== null;
   const confidence: Confidence = areaSpecific ? (blended ? "HIGH" : "MEDIUM") : "LOW";
 
   // 7. Reasons: short, factual, built only from the numbers above.
@@ -272,6 +279,13 @@ export function scoreFare(input: ScoreInput): FareVerdict {
     reasons.push(`That is ${percentText(pct, highPct)} above the expected fare, more than ${highPct}% over.`);
   }
 
+  if (fixed) {
+    reasons.push(
+      `The official fixed fare from ${fixed.originName} to ${fixed.destName} is ${formatINR(fixed.fare)}${
+        fixed.listedKm ? ` (about ${fixed.listedKm} km)` : ""
+      }.`,
+    );
+  }
   if (minFareApplied) reasons.push(`The minimum fare of ${formatINR(b.minFare as number)} applies to short trips.`);
   if (nightApplied) {
     reasons.push(`Night rate applied: ×${b.nightMultiplier} between ${formatHour(b.nightStart)} and ${formatHour(b.nightEnd)}.`);
@@ -283,11 +297,11 @@ export function scoreFare(input: ScoreInput): FareVerdict {
 
   if (blended && communityMedian !== null) {
     reasons.push(
-      `Expected fare blends the rate card with ${n} recent traveller reports for similar trips (median ${formatINR(Math.round(communityMedian))}).`,
+      `Expected fare blends the ${baseName} with ${n} recent traveller reports for similar trips (median ${formatINR(Math.round(communityMedian))}).`,
     );
   } else if (n > 0) {
     reasons.push(
-      `Only ${n} similar traveller report${n === 1 ? "" : "s"} so far (${COMMUNITY_BLEND.minSamples} needed), so the rate card alone is used.`,
+      `Only ${n} similar traveller report${n === 1 ? "" : "s"} so far (${COMMUNITY_BLEND.minSamples} needed), so the ${baseName} alone is used.`,
     );
   }
 
@@ -318,10 +332,13 @@ export function scoreFare(input: ScoreInput): FareVerdict {
     fairRange,
     distanceKm: isPerKm ? input.distanceKm : null,
     distanceMethod: isPerKm ? input.distanceMethod : null,
-    benchmarkSource: b.source,
+    benchmarkSource: fixed ? fixed.source : b.source,
     communitySampleSize: n,
     nearbyScam,
     confidence,
     reasons,
+    fixedFare: fixed
+      ? { origin: fixed.originName, destination: fixed.destName, fare: fixed.fare, listedKm: fixed.listedKm, sourceNote: fixed.sourceNote }
+      : null,
   };
 }
