@@ -178,6 +178,32 @@ function percentText(pct: number, mustExceed?: number): string {
   return mustExceed !== undefined && whole <= mustExceed ? `${pct.toFixed(1)}%` : `${whole}%`;
 }
 
+/**
+ * Step 1 on its own: the rate-card fare for a trip (no community data). Also used to estimate
+ * how far scam-report quotes were above the rate card on the hotspot map.
+ * Throws ScoringInputError when the inputs don't fit the benchmark's pricing unit.
+ */
+export function benchmarkExpectedFare(
+  b: FareBenchmark,
+  distanceKm: number | null,
+  sessionType: SessionType | null,
+  tripTime: Date,
+): { expected: number; minFareApplied: boolean; nightApplied: boolean } {
+  if (b.pricingUnit === "per_km") {
+    if (distanceKm === null || !(distanceKm >= 0) || b.baseFare === null || b.perKmRate === null || b.minFare === null) {
+      throw new ScoringInputError("per-km fare needs a distance and a complete benchmark");
+    }
+    const metered = b.baseFare + b.perKmRate * distanceKm;
+    const minFareApplied = metered < b.minFare;
+    const nightApplied = b.nightMultiplier > 1 && isNightTime(tripTime, b.nightStart, b.nightEnd);
+    const expected = Math.max(b.minFare, metered) * (nightApplied ? b.nightMultiplier : 1);
+    return { expected, minFareApplied, nightApplied };
+  }
+  const rate = sessionType === null ? undefined : b.sessionRates?.[sessionType];
+  if (!(rate !== undefined && rate > 0)) throw new ScoringInputError("per-session fare needs a session rate");
+  return { expected: rate, minFareApplied: false, nightApplied: false };
+}
+
 export function scoreFare(input: ScoreInput): FareVerdict {
   validate(input);
   const { benchmark: b, quotedPrice } = input;
@@ -185,19 +211,11 @@ export function scoreFare(input: ScoreInput): FareVerdict {
   const isPerKm = b.pricingUnit === "per_km";
 
   // 1. Expected fare from the benchmark.
-  let benchmarkExpected: number;
-  let minFareApplied = false;
-  let nightApplied = false;
-  if (isPerKm) {
-    const d = input.distanceKm as number;
-    const metered = (b.baseFare as number) + (b.perKmRate as number) * d;
-    minFareApplied = metered < (b.minFare as number);
-    benchmarkExpected = Math.max(b.minFare as number, metered);
-    nightApplied = b.nightMultiplier > 1 && isNightTime(input.tripTime, b.nightStart, b.nightEnd);
-    if (nightApplied) benchmarkExpected *= b.nightMultiplier;
-  } else {
-    benchmarkExpected = (b.sessionRates as Record<SessionType, number>)[input.sessionType as SessionType];
-  }
+  const {
+    expected: benchmarkExpected,
+    minFareApplied,
+    nightApplied,
+  } = benchmarkExpectedFare(b, input.distanceKm, input.sessionType, input.tripTime);
 
   // 2. Community blend.
   const samples = communitySamples(input);

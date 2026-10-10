@@ -242,6 +242,25 @@ export interface VoteResponse {
   votes: number;
 }
 
+/** GET /api/hotspots */
+export interface HotspotsResponse {
+  hotspots: {
+    id: string;
+    lat: number;
+    lng: number;
+    count: number;
+    distinctDevices: number;
+    topTags: ScamTag[];
+    typicalOvercharge: number | null;
+    lastReportAt: string;
+    nearPlace: string | null;
+    areaName: string | null;
+  }[];
+  serviceType: ServiceType | null;
+  windowDays: number;
+  minDevices: number;
+}
+
 /** Trip details handed from the verdict card to the report form (via sessionStorage, not the URL). */
 export interface ReportDraft {
   serviceType: ServiceType;

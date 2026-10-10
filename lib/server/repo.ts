@@ -2,6 +2,7 @@
 import "server-only";
 import { EVIDENCE_PHOTO } from "../config";
 import type { BoundingBox } from "../geo";
+import type { ScamPoint } from "../hotspots";
 import type { ReportSample } from "../scoring";
 import { getSupabase } from "../supabase-server";
 import type {
@@ -339,4 +340,50 @@ export async function evidenceExists(path: string): Promise<boolean> {
   const { data, error } = await getSupabase().storage.from(EVIDENCE_PHOTO.bucket).exists(path);
   if (error) return false;
   return data;
+}
+
+// ---------------------------------------------------------------------------
+// Hotspots
+
+/** Scam reports since `since`, optionally for one service (device_id is used for counting only). */
+export async function listScamPoints(since: Date, serviceType?: ServiceType): Promise<ScamPoint[]> {
+  let query = getSupabase()
+    .from("reports")
+    .select("id, device_id, service_type, area_id, pickup_lat, pickup_lng, distance_km, session_type, quoted_price, scam_tags, created_at")
+    .eq("is_scam", true)
+    .gte("created_at", since.toISOString())
+    .order("created_at", { ascending: false })
+    .limit(5000);
+  if (serviceType) query = query.eq("service_type", serviceType);
+  const { data, error } = await query.overrideTypes<
+    Pick<
+      ReportRow,
+      | "id"
+      | "device_id"
+      | "service_type"
+      | "area_id"
+      | "pickup_lat"
+      | "pickup_lng"
+      | "distance_km"
+      | "session_type"
+      | "quoted_price"
+      | "scam_tags"
+      | "created_at"
+    >[],
+    { merge: false }
+  >();
+  if (error) throw new Error(`listScamPoints: ${error.message}`);
+  return data.map((r) => ({
+    id: r.id,
+    deviceId: r.device_id,
+    serviceType: r.service_type,
+    areaId: r.area_id,
+    lat: r.pickup_lat,
+    lng: r.pickup_lng,
+    distanceKm: num(r.distance_km),
+    sessionType: r.session_type,
+    quotedPrice: num(r.quoted_price),
+    scamTags: r.scam_tags,
+    createdAt: new Date(r.created_at),
+  }));
 }

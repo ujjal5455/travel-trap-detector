@@ -104,6 +104,24 @@ export const EVIDENCE_PHOTO = {
   uploadUrlsPerHour: 10,
 } as const;
 
+/** Scam hotspot map. Uses the same window and device rule as the community escalation. */
+export const HOTSPOTS = {
+  /**
+   * Cells are circles of this radius centred on the densest reports. Same radius as the community
+   * escalation, so a hotspot on the map is exactly a place where fare checks get a warning,
+   * and the counts match the verdict card's reasons.
+   */
+  cellRadiusMeters: COMMUNITY_ESCALATION.radiusMeters,
+  /** Count bands for circle colour and size (each paired with a text label) */
+  levels: [
+    { minCount: 10, label: "Many reports", color: "#7f1d1d" },
+    { minCount: 6, label: "Several reports", color: "#b91c1c" },
+    { minCount: 3, label: "A few reports", color: "#b45309" },
+  ],
+  /** Nearest preset place within this distance names the hotspot in the list */
+  placeNameRadiusKm: 1,
+} as const;
+
 export const REPORTS = {
   descriptionMax: 280,
   /** "Nearby" list on the report page and thank-you screen */

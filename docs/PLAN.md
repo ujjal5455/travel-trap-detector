@@ -188,14 +188,18 @@ Built to the user's phase 7 spec. Photo upload uses a server-issued signed uploa
 - [x] Verified live on a production build: new report in nearby results; second vote 409; 6th report 429; signed upload 200; public photo URL 400; redaction; full UI flow at 375 px
 - [x] Commit `phase 7: community reports`
 
-Test data left in Supabase (for the user to delete): reports from devices `7e57de71-…` and descriptions starting "TEST", plus their photos in the `evidence` bucket.
+Test reports and votes were deleted in phase 8; their photos may remain in the `evidence` bucket.
 
-### Phase 8: Hotspot map
-- [ ] `lib/hotspots.ts`: grid clustering of `is_scam` reports (last 90 days), counts, distinct devices, top tags + tests
-- [ ] `app/api/hotspots/route.ts`
-- [ ] `components/map/HotspotMap.tsx` (lazy, circles sized by count)
-- [ ] `app/map/page.tsx`: map + recent reports list + "This happened to me too"
-- [ ] Commit `phase 8: hotspot map`
+### Phase 8: Scam hotspot map
+Built to the user's phase 8 spec, with two agreed changes: cells are circles centred on the densest reports (a fixed grid can split a tight cluster so it drops below 3 devices), and their radius is the warning rule's 500 m rather than ~250 m, so the map and the verdict card show the same counts.
+
+- [x] `lib/scoring.ts` `benchmarkExpectedFare` (step 1 on its own, reused for overcharge)
+- [x] `lib/hotspots.ts` `findHotspots`: last 90 days, optional service filter, ≥3 distinct devices, count, distinct travellers, top 3 tags, typical overcharge (median quoted ÷ rate card, night rate by report time), last report, nearest preset place and area; `hotspotLevel` bands + 12 tests (incl. 1–2 device cells excluded, one device ×3 excluded, cluster across a grid line not split, no device IDs)
+- [x] `GET /api/hotspots?service_type=`: zod-validated filter, `"use cache"` + `cacheLife("minutes")`
+- [x] `/map`: service filter, Leaflet map (client-only) with circles sized and coloured by count plus a text legend, popup per hotspot, accessible list sorted by count with "Show on map", centres on the user's location if allowed (never sent to the server), otherwise Guwahati
+- [x] Verified on a production build at 375 px: station 9 reports / 4 travellers and airport 8 / 4 appear; Kamakhya, Police Bazar, MG Marg and Kohora (2 devices each) don't; filters, popup, "Show on map", empty state, no horizontal scroll
+- [x] Deleted the phase 7 test reports and vote (with the user's OK); `db:check` passes with the 100 seed reports
+- [x] Commit `phase 8: scam hotspot map`
 
 ### Phase 9: Show-the-driver card
 - [ ] `lib/driver-lines.ts`: polite lines in EN / AS / BN / HI
@@ -360,4 +364,4 @@ on conflict (id) do nothing;
 ---
 
 ## Next up
-Phase 8: hotspot map. Decisions D2 to D8 are treated as accepted unless changed.
+Phase 9: show-the-driver card. Decisions D2 to D8 are treated as accepted unless changed.
