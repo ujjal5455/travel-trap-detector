@@ -12,7 +12,8 @@
     "test:watch": "vitest",
     "check": "npm run lint && npm run typecheck && npm run test",
     "db:check": "tsx scripts/check-db.ts",
-    "icons": "node scripts/generate-icons.mjs"
+    "icons": "node scripts/generate-icons.mjs",
+    "rls:check": "tsx scripts/check-rls.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.117.3",

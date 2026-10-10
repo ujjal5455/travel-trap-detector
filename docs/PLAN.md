@@ -243,12 +243,18 @@ Built to the user's phase 11 spec.
 
 Not fixed (by design or third party): API JSON isn't gzipped by `next start` locally (Vercel compresses responses); 13 KiB of legacy polyfills in a framework chunk.
 
-### Phase 12: Deploy
-- [ ] Vercel project, env vars set (server-only)
-- [ ] Hosted Supabase migrated + seeded
-- [ ] Smoke test on a real phone, including on a slow connection
-- [ ] Final README: setup, architecture, honesty and privacy rules, known limitations
-- [ ] Commit `phase 12: deploy`
+### Phase 12: Deploy and final check
+- [x] Vercel fix: the service worker is now built **at build time** (`● /serwist/sw.js`, prerendered through a `"use cache"` helper). Before, the route was dynamic and would have run esbuild inside a Vercel function, where it and the source files aren't available. The revision uses `VERCEL_GIT_COMMIT_SHA` on Vercel.
+- [x] `vercel.json`: function region `bom1` (Mumbai), next to the Supabase project
+- [x] Secret scan of everything a browser can download (105 files: client JS/CSS, prerendered HTML/RSC, route bodies, service worker, `public/`): no key names, no key values, no `sb_secret_` / `gsk_`, no server-only Supabase code. Positive control confirmed the scan reads the client bundle. Git history (17 commits): no secret values; only `.env.example` is tracked.
+- [x] RLS tooling: `supabase/checks/verify-security.sql` (RLS flag, policy count and anon/authenticated grants per table, bucket privacy) and `npm run rls:check` (public-key read/write/storage attempts must all fail). Earlier evidence: the migration was verified in PGlite (RLS on all 6 tables; anon denied; service_role allowed).
+- [ ] User runs `verify-security.sql` in Supabase (and optionally `npm run rls:check`) and confirms the result
+- [x] `docs/DEPLOY.md`: GitHub → Vercel Hobby walkthrough, environment variables with which are secret (never `NEXT_PUBLIC_`), post-deploy checks, real-phone checklist (mobile data, Slow 4G, offline)
+- [ ] User deploys to Vercel; live URL added to README and here
+- [ ] Phone checklist run on the live URL
+- [x] Commit `phase 12: deploy readiness and security checks`
+
+Live URL: _pending first deploy_
 
 ---
 
@@ -386,4 +392,4 @@ on conflict (id) do nothing;
 ---
 
 ## Next up
-Phase 12: deploy to Vercel. Decisions D2 to D8 are treated as accepted unless changed.
+Deploy to Vercel (docs/DEPLOY.md), then add the live URL. Decisions D2 to D8 are treated as accepted unless changed.

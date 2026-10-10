@@ -2,6 +2,8 @@
 
 A mobile-first web app that tells travellers in North East India whether a quoted price for an **auto, taxi, bike taxi, shared Sumo seat or local guide** looks fair, and **explains why**.
 
+**Live demo:** _URL added after the first Vercel deploy_ · Deploy guide and phone test checklist: [docs/DEPLOY.md](docs/DEPLOY.md)
+
 Built for CodeWar 8.0, Problem 5 (PS_OPPORTUNITIES). The two requirements from the problem statement:
 
 1. **Risk comes from pricing data plus community intelligence.** Each verdict compares the quote with an area rate card, blends in what other travellers actually paid, and is raised one level where several different travellers have reported scams nearby.
@@ -37,6 +39,8 @@ cp .env.example .env.local      # then fill in the values below
    npm run build && npm start
    ```
 
+5. **Deploy:** see [docs/DEPLOY.md](docs/DEPLOY.md) (GitHub → Vercel Hobby, region Mumbai, environment variables, security checks, phone checklist).
+
 ### Environment variables
 
 All are server-only (never prefixed `NEXT_PUBLIC_`). Real values go in `.env.local`, which is gitignored.
@@ -59,6 +63,7 @@ All are server-only (never prefixed `NEXT_PUBLIC_`). Real values go in `.env.loc
 | `npm run build` / `npm start` | Production build and server (with service worker) |
 | `npm run check` | Lint + typecheck + all tests |
 | `npm run db:check` | Row counts, seed sanity, private bucket, hotspot check |
+| `npm run rls:check` | Tries to read and write everything with the **public** key; all must be blocked (needs `SUPABASE_PUBLISHABLE_KEY` in `.env.local`) |
 | `npm run icons` | Re-render the PWA icons from `public/icons/icon.svg` |
 
 ## Architecture
@@ -132,6 +137,11 @@ Full plain-language version with live numbers: **`/about`**. In short (all thres
 - **Seed reports are synthetic** (`is_seed = true`, device IDs start with `5eed0000-`): 70 normal fares and 30 scams with hotspots at Guwahati Railway Station and the airport. They exist to demonstrate the community features.
 - **Place coordinates** come from OpenStreetMap (element IDs in `seed.sql`). Not fully verified: which Guwahati airport terminal handles arrivals, Pakyong's terminal (unmapped), and Police Bazar (street centre).
 - **Translations** on the driver card are first drafts marked "needs native speaker review" in `lib/i18n/driver-card.json`.
+
+## Security checks
+
+- **No secret reaches the browser:** the client bundle, prerendered pages, service worker and `public/` were scanned for every key name, every key value and the `sb_secret_` / `gsk_` prefixes. All clean. Git history contains no secret values.
+- **Database lock-down:** RLS on every table, no policies, no grants for `anon`/`authenticated`. Verify with `supabase/checks/verify-security.sql` (SQL Editor) and `npm run rls:check`.
 
 ## Privacy and safety
 
