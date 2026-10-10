@@ -75,6 +75,90 @@ export interface FareBenchmark {
   sourceNote: string | null;
 }
 
+// ---------------------------------------------------------------------------
+// Table row types: exactly what PostgREST returns (snake_case, timestamps as ISO strings).
+// Keep in sync with supabase/migrations.
+
+export interface AreaRow {
+  id: string;
+  name: string;
+  state: string;
+  center_lat: number;
+  center_lng: number;
+  radius_km: number;
+}
+
+export interface PlaceRow {
+  id: string;
+  area_id: string;
+  name: string;
+  kind: PlaceKind;
+  lat: number;
+  lng: number;
+}
+
+export interface FareBenchmarkRow {
+  id: string;
+  area_id: string | null;
+  service_type: ServiceType;
+  pricing_unit: PricingUnit;
+  base_fare: number | null;
+  per_km_rate: number | null;
+  min_fare: number | null;
+  night_multiplier: number;
+  night_start: number;
+  night_end: number;
+  session_rates: Record<SessionType, number> | null;
+  source: BenchmarkSource;
+  source_note: string | null;
+  updated_at: string;
+}
+
+export interface ReportRow {
+  id: string;
+  device_id: string;
+  area_id: string | null;
+  service_type: ServiceType;
+  pickup_lat: number;
+  pickup_lng: number;
+  drop_lat: number | null;
+  drop_lng: number | null;
+  distance_km: number | null;
+  session_type: SessionType | null;
+  quoted_price: number | null;
+  paid_price: number | null;
+  felt_fair: boolean | null;
+  is_scam: boolean;
+  scam_tags: ScamTag[];
+  description: string | null;
+  photo_path: string | null;
+  is_seed: boolean;
+  created_at: string;
+}
+
+export interface ReportVoteRow {
+  report_id: string;
+  device_id: string;
+  created_at: string;
+}
+
+export interface FareCheckRow {
+  id: string;
+  device_id: string;
+  area_id: string | null;
+  service_type: ServiceType;
+  distance_km: number | null;
+  quoted_price: number;
+  verdict: Verdict;
+  ratio: number;
+  /** Full verdict, so /api/explain works from a checkId instead of trusting client JSON */
+  result: FareVerdict | null;
+  explanation: string | null;
+  created_at: string;
+}
+
+// ---------------------------------------------------------------------------
+
 export interface FareVerdict {
   verdict: Verdict;
   ratio: number;

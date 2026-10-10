@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { CheckFareIcon, InfoIcon, MapIcon, ReportIcon } from "./icons";
 
 const ITEMS = [
-  { href: "/", label: "Check fare", Icon: CheckFareIcon },
+  { href: "/", label: "Check", Icon: CheckFareIcon },
   { href: "/report", label: "Report", Icon: ReportIcon },
   { href: "/map", label: "Map", Icon: MapIcon },
   { href: "/about", label: "About", Icon: InfoIcon },

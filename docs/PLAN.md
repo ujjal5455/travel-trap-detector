@@ -48,7 +48,8 @@ lib/                            pure, unit-tested, no I/O
   config.ts types.ts validation.ts scoring.ts geo.ts time.ts format.ts
   distance.ts places.ts nominatim.ts explain.ts explain-template.ts number-guard.ts
   hotspots.ts rate-limit.ts driver-lines.ts
-  server/   supabase.ts repo.ts device.ts   ('server-only')
+  supabase-server.ts              server-only Supabase client
+  server/   repo.ts device.ts               ('server-only')
   client/   device-id.ts api.ts offline-store.ts
 tests/                          *.test.ts
 supabase/migrations/0001_init.sql
@@ -78,6 +79,12 @@ docs/PLAN.md  docs/DEMO.md
 - [x] `lib/config.ts` (all thresholds), `lib/types.ts` (FareVerdict etc.), `lib/format.ts` + tests
 - [x] README stub
 - [x] Lint, typecheck, tests, build green; checked at 375 px. Commit `phase 1: scaffold`
+- [x] Fix-up: installed `@supabase/supabase-js`, `leaflet`, `react-leaflet`, `server-only`, dev `@types/leaflet`, `tsx` (no `@anthropic-ai/sdk`: Groq via fetch)
+- [x] Fix-up: `lib/supabase-server.ts` (server-only, lazy client, throws in the browser or without env vars)
+- [x] Fix-up: row types for all six tables in `lib/types.ts`
+- [x] Fix-up: top bar with the app name; nav labels Check / Report / Map / About
+- [x] Fix-up: `lib/client/device-id.ts` (UUID in localStorage, with fallbacks for insecure contexts and blocked storage) + `lib/client/api.ts` (`x-device-id` fetch wrapper) + tests
+- [x] Fix-up: plain `npx tsc --noEmit` passes on a fresh clone. Commit `phase 1: complete scaffold`
 
 Phase 1 notes:
 - create-next-app now enables Cache Components and Partial Prefetching by default. Kept both. Static pages need nothing extra; API `GET` handlers follow the prerender model, so phases 3 and 8 must keep them dynamic.
@@ -90,7 +97,7 @@ Phase 1 notes:
 - [ ] `supabase/migrations/0001_init.sql` (schema below, RLS, private `evidence` bucket)
 - [ ] `data/seed/areas.ts`, `places.ts`, `benchmarks.ts` (`demo_estimate`, "Replace with official fare chart"), `reports.ts` (`is_seed = true`, dates relative to now, distinct device IDs for the escalation demo)
 - [ ] `scripts/seed.ts` (idempotent), `npm run seed`
-- [ ] `lib/server/supabase.ts` (server-only client), `lib/server/repo.ts` (typed queries)
+- [ ] `lib/server/repo.ts` (typed queries on top of `lib/supabase-server.ts`, which exists already)
 - [ ] Migration applied and seed run against the hosted project
 - [ ] Commit `phase 2: database and seed`
 
@@ -111,7 +118,7 @@ Phase 1 notes:
 
 ### Phase 5: Fare check API and UI
 - [ ] `lib/rate-limit.ts` (30 checks/hour/device) + tests
-- [ ] `lib/server/device.ts` (read and validate `x-device-id`), `lib/client/device-id.ts`, `lib/client/api.ts`
+- [ ] `lib/server/device.ts` (read and validate `x-device-id`). The client side (`lib/client/device-id.ts`, `lib/client/api.ts`) was done in phase 1.
 - [ ] `app/api/fare-check/route.ts`: validate, find area, distance, load benchmark, community and nearby scams, score, insert fare_check, return verdict + checkId
 - [ ] `components/fare-check/*`: service picker, place picker (presets, search, map), time (default now), session type for guides, quoted price
 - [ ] `components/map/LazyMap.tsx` + `MapPicker.tsx` (`ssr:false`, loaded only on "Pick on map", CircleMarker/divIcon only)
