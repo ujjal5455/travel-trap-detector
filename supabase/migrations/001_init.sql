@@ -3,7 +3,7 @@
 --
 -- Access model: the browser never talks to Supabase. Route handlers use the secret (service role) key,
 -- which bypasses RLS. RLS is ON for every table with NO policies, and anon/authenticated have no grants,
--- so the public API keys can read or write nothing.
+-- so the public API keys can read or write nothing. service_role gets explicit grants below.
 
 -- ---------------------------------------------------------------------------
 -- Areas and places
@@ -145,6 +145,13 @@ alter table public.fare_checks     enable row level security;
 revoke all on public.areas, public.places, public.fare_benchmarks,
               public.reports, public.report_votes, public.fare_checks
   from anon, authenticated;
+
+-- The server's secret key acts as service_role. Grant it explicitly so the app works even when the
+-- project was created with "Automatically expose new tables" turned off (the recommended setting).
+grant usage on schema public to service_role;
+grant select, insert, update, delete on public.areas, public.places, public.fare_benchmarks,
+              public.reports, public.report_votes, public.fare_checks
+  to service_role;
 
 -- ---------------------------------------------------------------------------
 -- Private Storage bucket for evidence photos (max 2 MB, images only)
