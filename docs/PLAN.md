@@ -125,11 +125,20 @@ Built to the user's phase 3 spec. Differences from the first plan: separate `/ap
 Notes: Next 16 allows only one `next dev` per project folder, so stop `dev` before starting `dev-no-ors`. `/api/distance` and `/api/geocode` have no rate limit yet; the ORS quota could be drained by abuse (see risks).
 
 ### Phase 4: Scoring engine
-- [ ] `lib/time.ts`: IST hour, night window crossing midnight + tests
-- [ ] `lib/scoring.ts`: `scoreFare(input): FareVerdict` implementing steps 1 to 7 of docs/SPEC.md
-- [ ] `lib/validation.ts`: zod schemas for inputs and FareVerdict
-- [ ] Tests: per_km, min_fare floor, night multiplier, per_session, regional fallback, 4 vs 5 community samples, `w` cap at 0.5, distance scaling, thresholds at 1.20 and 1.60 exactly, escalation (3 reports but 2 devices = no escalation, cap at HIGH_RISK), fair-range rounding, confidence levels, reason text
-- [ ] Commit `phase 4: scoring engine`
+- [x] `lib/time.ts`: India-time hour via `Intl` (server zone doesn't matter), night window `[start, end)` that can cross midnight + tests
+- [x] `lib/labels.ts`: service, session and scam-tag labels; "a"/"an" before numbers
+- [x] `lib/scoring.ts`: `scoreFare(input): FareVerdict`, pure, steps 1 to 7 of docs/SPEC.md; plus `selectBenchmark`, `communitySamples`, `nearbyScams`, `verdictForRatio`, `raiseOneLevel`, `median`
+- [x] Tests (63 in `scoring.test.ts`, 6 in `time.test.ts`): verdicts, exact 1.20 / 1.60 boundaries (incl. float noise), min fare, night window edges incl. crossing midnight, blend ignored at 4 and weighted at 5 / 10 / 30, median not mean, distance scaling and the ±20% edge, escalation (3 devices yes, 1 device no, capped at HIGH_RISK, 500 m / 90 days), guide sessions, fair-range rounding, all 3 confidence levels, reason wording, benchmark selection, input validation
+- [x] Five example verdicts run against the real seed data (in the phase 4 report)
+- [x] Commit `phase 4: scoring engine`
+
+Interpretations (docs/SPEC.md is silent on these):
+- `scoreFare` gets candidate reports and applies every filter itself, so all the rules are tested in one place; the DB query only pre-filters roughly.
+- No community blend for trips outside every area ("same area" is undefined there). Such trips are LOW confidence anyway.
+- The ratio uses the expected fare rounded to whole rupees, so the numbers in the reasons agree with each other.
+- The night multiplier applies to the benchmark part only; community medians are blended in as reported.
+- `communitySampleSize` is the number of matching reports even when below 5 (the reasons say they weren't used).
+- Zod schemas for the fare-check request move to phase 5, where the route needs them.
 
 ### Phase 5: Fare check API and UI
 - [ ] `lib/rate-limit.ts` (30 checks/hour/device) + tests
@@ -328,4 +337,4 @@ on conflict (id) do nothing;
 ---
 
 ## Next up
-Phase 4: scoring engine (`lib/time.ts`, `lib/scoring.ts`, full unit tests). Decisions D2 to D8 are treated as accepted unless changed.
+Phase 5: fare check API and UI. Decisions D2 to D8 are treated as accepted unless changed.
