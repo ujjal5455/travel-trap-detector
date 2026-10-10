@@ -14,6 +14,7 @@ Two requirements from the problem statement must be obvious in the demo:
 
 - Next.js (App Router, TypeScript strict, current stable) with Tailwind CSS, set up by create-next-app. No `src/` directory.
 - Supabase Postgres + Storage. The browser never talks to Supabase directly: all reads and writes go through route handlers in `app/api/` using the server-side secret (service role) key. RLS is enabled on every table with no public policies.
+  - One exception (agreed in phase 7): evidence photos are uploaded by the browser to a server-issued signed upload URL for a single object path in the private `evidence` bucket. The browser can never read, list or overwrite files there.
 - Leaflet + react-leaflet + OpenStreetMap tiles. Leaflet uses `window`, so map components must be client-only (`dynamic(..., { ssr: false })`).
 - Road distance: OpenRouteService directions API (driving-car), called from the server. Fallback: Haversine distance × 1.3. Always return which method was used.
 - Place search: a seeded list of popular NER places first, Nominatim search second (server-side, custom User-Agent, debounced, max 1 request per second).

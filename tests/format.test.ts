@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatINR, formatKm, formatRatio, roundToNearest } from "@/lib/format";
+import { formatINR, formatKm, formatMeters, formatRatio, formatTimeAgo, roundToNearest } from "@/lib/format";
 
 describe("formatINR", () => {
   it("formats whole rupees with the rupee sign", () => {
@@ -21,6 +21,26 @@ describe("roundToNearest", () => {
     expect(roundToNearest(256.5, 10)).toBe(260);
     expect(roundToNearest(254.9, 10)).toBe(250);
     expect(roundToNearest(255, 10)).toBe(260);
+  });
+});
+
+describe("formatTimeAgo", () => {
+  const now = new Date("2026-10-10T12:00:00Z");
+  it.each([
+    ["2026-10-10T08:00:00Z", "today"],
+    ["2026-10-09T08:00:00Z", "yesterday"],
+    ["2026-10-05T12:00:00Z", "5 days ago"],
+    ["2026-09-20T12:00:00Z", "2 weeks ago"],
+    ["2026-06-10T12:00:00Z", "4 months ago"],
+  ])("%s → %s", (iso, expected) => {
+    expect(formatTimeAgo(iso, now)).toBe(expected);
+  });
+});
+
+describe("formatMeters", () => {
+  it("uses metres below 1 km and km above", () => {
+    expect(formatMeters(343)).toBe("340 m");
+    expect(formatMeters(1234)).toBe("1.2 km");
   });
 });
 

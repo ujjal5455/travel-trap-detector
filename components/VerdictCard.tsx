@@ -1,11 +1,12 @@
 "use client";
 
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ExplanationBlock } from "@/components/ExplanationBlock";
 import type { Ref } from "react";
 import { formatINR, formatKm, formatRatio } from "@/lib/format";
 import { CONFIDENCE_LABELS, SOURCE_LABELS, VERDICT_LABELS } from "@/lib/labels";
-import type { CheckResponse, Verdict } from "@/lib/types";
+import { saveReportDraft } from "@/lib/client/report-draft";
+import type { CheckResponse, ReportDraft, Verdict } from "@/lib/types";
 
 const STYLES: Record<Verdict, { band: string; text: string; border: string }> = {
   FAIR: { band: "bg-fair-soft", text: "text-fair", border: "border-fair" },
@@ -51,7 +52,17 @@ function Badge({ children, tone = "neutral" }: { children: React.ReactNode; tone
   );
 }
 
-export function VerdictCard({ result, headingRef }: { result: CheckResponse; headingRef?: Ref<HTMLHeadingElement> }) {
+export function VerdictCard({
+  result,
+  draft,
+  headingRef,
+}: {
+  result: CheckResponse;
+  /** Trip details to prefill the report form */
+  draft: ReportDraft;
+  headingRef?: Ref<HTMLHeadingElement>;
+}) {
+  const router = useRouter();
   const { verdict: v, explanation, quotedPrice, area } = result;
   const style = STYLES[v.verdict];
   const label = VERDICT_LABELS[v.verdict];
@@ -111,12 +122,16 @@ export function VerdictCard({ result, headingRef }: { result: CheckResponse; hea
           >
             Show the driver <span className="text-xs font-normal">(coming soon)</span>
           </button>
-          <Link
-            href={result.checkId ? `/report?checkId=${result.checkId}` : "/report"}
+          <button
+            type="button"
+            onClick={() => {
+              saveReportDraft(draft);
+              router.push("/report");
+            }}
             className="flex min-h-12 items-center justify-center rounded-xl border-2 border-line px-4 font-semibold"
           >
             Report what I paid
-          </Link>
+          </button>
         </div>
 
         {v.benchmarkSource === "demo_estimate" && (

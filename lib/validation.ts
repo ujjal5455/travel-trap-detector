@@ -1,6 +1,6 @@
 // zod schemas for request input. Route handlers validate with these before touching anything else.
 import { z } from "zod";
-import { PLACE_SEARCH } from "./config";
+import { PLACE_SEARCH, REPORTS } from "./config";
 import {
   BENCHMARK_SOURCES,
   CONFIDENCE_LEVELS,
@@ -58,6 +58,52 @@ export const checkRequestSchema = z
   });
 
 export type CheckRequest = z.infer<typeof checkRequestSchema>;
+
+/** Object path issued by /api/reports/upload-url: "<device id>/<random uuid>.jpg". */
+export const EVIDENCE_PATH_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\/[0-9a-f-]{36}\.jpg$/;
+
+const price = z.number().positive("must be more than ₹0").max(MAX_QUOTE, `must be at most ₹${MAX_QUOTE.toLocaleString("en-IN")}`);
+
+/** POST /api/reports body. */
+export const reportRequestSchema = z
+  .object({
+    serviceType: z.enum(SERVICE_TYPES),
+    pickup: latLngSchema,
+    drop: latLngSchema.optional(),
+    sessionType: z.enum(SESSION_TYPES).optional(),
+    quotedPrice: price.optional(),
+    paidPrice: price.optional(),
+    feltFair: z.boolean().optional(),
+    isScam: z.boolean(),
+    scamTags: z.array(z.enum(SCAM_TAGS)).max(SCAM_TAGS.length).default([]),
+    description: z.string().trim().max(REPORTS.descriptionMax, `keep it under ${REPORTS.descriptionMax} characters`).optional(),
+    photoPath: z.string().regex(EVIDENCE_PATH_RE, "invalid photo reference").optional(),
+  })
+  .superRefine((body, ctx) => {
+    if (body.serviceType === "guide") {
+      if (!body.sessionType) ctx.addIssue({ code: "custom", path: ["sessionType"], message: "choose half day or full day" });
+    } else if (!body.drop) {
+      ctx.addIssue({ code: "custom", path: ["drop"], message: "choose a drop point" });
+    }
+    if (!body.isScam && body.paidPrice === undefined) {
+      ctx.addIssue({ code: "custom", path: ["paidPrice"], message: "enter what you paid" });
+    }
+    if (body.isScam && body.scamTags.length === 0) {
+      ctx.addIssue({ code: "custom", path: ["scamTags"], message: "choose at least one kind of problem" });
+    }
+    if (!body.isScam && body.scamTags.length > 0) {
+      ctx.addIssue({ code: "custom", path: ["scamTags"], message: "only for scam reports" });
+    }
+  });
+
+export type ReportRequest = z.infer<typeof reportRequestSchema>;
+
+export const nearbyQuerySchema = z.object({
+  lat: z.coerce.number().min(-90).max(90),
+  lng: z.coerce.number().min(-180).max(180),
+});
+
+export const uuidSchema = z.uuid();
 
 /**
  * POST /api/explain body. The verdict comes from the browser, so every field is bounded:

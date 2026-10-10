@@ -92,9 +92,22 @@ export const PLACE_SEARCH = {
 } as const;
 
 export const EVIDENCE_PHOTO = {
-  /** Server hard cap (Vercel bodies max out at 4.5 MB) */
+  bucket: "evidence",
+  /** Storage hard cap (set on the bucket in 001_init.sql) */
   maxBytes: 2 * 1024 * 1024,
-  /** Client compresses to roughly this before upload */
-  targetBytes: 1024 * 1024,
+  /** The browser compresses to under this before upload */
+  targetBytes: 300 * 1024,
+  /** Longest side before the first compression attempt */
+  maxDimension: 1600,
   mimeTypes: ["image/jpeg", "image/png", "image/webp"],
+  /** Signed upload URLs per device per hour (in memory, per server instance) */
+  uploadUrlsPerHour: 10,
+} as const;
+
+export const REPORTS = {
+  descriptionMax: 280,
+  /** "Nearby" list on the report page and thank-you screen */
+  nearbyRadiusKm: 1,
+  nearbyWindowDays: 180,
+  nearbyLimit: 20,
 } as const;

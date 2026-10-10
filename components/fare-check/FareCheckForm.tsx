@@ -4,14 +4,14 @@ import { useEffect, useRef, useState } from "react";
 import { PlacePicker } from "@/components/PlacePicker";
 import { VerdictCard } from "@/components/VerdictCard";
 import { ApiError, apiJson } from "@/lib/client/api";
-import type { CheckResponse, PlaceChoice, ServiceType, SessionType } from "@/lib/types";
+import type { CheckResponse, PlaceChoice, ReportDraft, ServiceType, SessionType } from "@/lib/types";
 import { ServicePicker } from "./ServicePicker";
 
 type Status =
   | { kind: "idle" }
   | { kind: "loading" }
-  | { kind: "error"; message: string; retryable: boolean; payload: CheckPayload }
-  | { kind: "done"; result: CheckResponse };
+  | { kind: "error"; message: string; retryable: boolean; payload: CheckPayload; draft: ReportDraft }
+  | { kind: "done"; result: CheckResponse; draft: ReportDraft };
 
 interface CheckPayload {
   serviceType: ServiceType;
@@ -70,26 +70,30 @@ export function FareCheckForm() {
     }
   }, [status]);
 
-  async function send(payload: CheckPayload) {
+  async function send(payload: CheckPayload, draft: ReportDraft) {
     setStatus({ kind: "loading" });
     try {
       const result = await apiJson<CheckResponse>("/api/check", { method: "POST", body: JSON.stringify(payload) });
-      setStatus({ kind: "done", result });
+      setStatus({ kind: "done", result, draft });
     } catch (err) {
-      setStatus({ kind: "error", ...describeError(err), payload });
+      setStatus({ kind: "error", ...describeError(err), payload, draft });
     }
   }
 
   function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (missing.length || !service || !pickup) return;
-    void send({
-      serviceType: service,
-      pickup: { lat: pickup.lat, lng: pickup.lng },
-      ...(isGuide ? { sessionType: session ?? undefined } : { drop: drop ? { lat: drop.lat, lng: drop.lng } : undefined }),
-      ...(timeMode === "custom" && customTime ? { tripTime: new Date(customTime).toISOString() } : {}),
-      quotedPrice: quotedNumber,
-    });
+    void send(
+      {
+        serviceType: service,
+        pickup: { lat: pickup.lat, lng: pickup.lng },
+        ...(isGuide ? { sessionType: session ?? undefined } : { drop: drop ? { lat: drop.lat, lng: drop.lng } : undefined }),
+        ...(timeMode === "custom" && customTime ? { tripTime: new Date(customTime).toISOString() } : {}),
+        quotedPrice: quotedNumber,
+      },
+      // Handed to the report form if the traveller taps "Report what I paid".
+      { serviceType: service, pickup, drop: isGuide ? null : drop, sessionType: isGuide ? session : null, quotedPrice: quotedNumber },
+    );
   }
 
   return (
@@ -220,7 +224,7 @@ export function FareCheckForm() {
             {status.retryable && (
               <button
                 type="button"
-                onClick={() => void send(status.payload)}
+                onClick={() => void send(status.payload, status.draft)}
                 className="mt-3 min-h-11 rounded-lg bg-ink px-4 font-semibold text-white"
               >
                 Try again
@@ -229,7 +233,7 @@ export function FareCheckForm() {
           </div>
         )}
 
-        {status.kind === "done" && <VerdictCard result={status.result} headingRef={headingRef} />}
+        {status.kind === "done" && <VerdictCard result={status.result} draft={status.draft} headingRef={headingRef} />}
       </div>
     </div>
   );

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { rateLimitError, windowStart } from "@/lib/rate-limit";
+import { MemoryRateLimiter, rateLimitError, windowStart } from "@/lib/rate-limit";
 
 describe("rateLimitError", () => {
   it("allows up to 30 fare checks per hour", () => {
@@ -10,6 +10,17 @@ describe("rateLimitError", () => {
   it("allows up to 5 reports per hour", () => {
     expect(rateLimitError("report", 4)).toBeNull();
     expect(rateLimitError("report", 5)).toMatch(/limit of 5 reports per hour/);
+  });
+});
+
+describe("MemoryRateLimiter", () => {
+  it("allows max hits per window per key, then frees up as hits age out", () => {
+    const limiter = new MemoryRateLimiter(2, 1000);
+    expect(limiter.hit("a", 0)).toBe(true);
+    expect(limiter.hit("a", 100)).toBe(true);
+    expect(limiter.hit("a", 200)).toBe(false);
+    expect(limiter.hit("b", 200)).toBe(true); // other keys are independent
+    expect(limiter.hit("a", 1001)).toBe(true); // the hit at 0 has aged out
   });
 });
 

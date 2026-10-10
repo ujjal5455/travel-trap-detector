@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { ReportPageClient } from "@/components/report/ReportPageClient";
 import { PageHeader } from "@/components/ui/PageHeader";
 
 export const metadata: Metadata = { title: "Report" };
@@ -8,9 +9,9 @@ export default function ReportPage() {
     <main>
       <PageHeader
         title="Report a fare"
-        subtitle="Tell other travellers what you paid, or flag a scam. Never include names, phone numbers or vehicle numbers."
+        subtitle="Tell other travellers what you paid, or flag a problem. Never include names, phone numbers or vehicle numbers."
       />
-      <p className="px-4 text-sm text-muted">The report form arrives in phase 7.</p>
+      <ReportPageClient />
     </main>
   );
 }

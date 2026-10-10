@@ -351,4 +351,4 @@ on conflict (id) do nothing;
 ---
 
 ## Next up
-Phase 7: reports. Decisions D2 to D8 are treated as accepted unless changed.
+Phase 7 built and verified (see commit); next: phase 8 hotspot map. Decisions D2 to D8 are treated as accepted unless changed.

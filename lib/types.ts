@@ -199,6 +199,58 @@ export interface CheckResponse {
   tripTime: string;
 }
 
+/** POST /api/reports/upload-url */
+export interface UploadUrlResponse {
+  path: string;
+  signedUrl: string;
+}
+
+/** POST /api/reports */
+export interface CreateReportResponse {
+  id: string;
+  /** true when a phone or vehicle number was removed from the description */
+  redacted: boolean;
+}
+
+/** One entry of GET /api/reports/nearby. Never includes device IDs or photo paths. */
+export interface NearbyReport {
+  id: string;
+  serviceType: ServiceType;
+  sessionType: SessionType | null;
+  distanceKm: number | null;
+  quotedPrice: number | null;
+  paidPrice: number | null;
+  feltFair: boolean | null;
+  isScam: boolean;
+  scamTags: ScamTag[];
+  description: string | null;
+  hasEvidence: boolean;
+  createdAt: string;
+  /** Metres from the point that was asked about */
+  metersAway: number;
+  votes: number;
+  votedByMe: boolean;
+  isMine: boolean;
+}
+
+export interface NearbyReportsResponse {
+  reports: NearbyReport[];
+}
+
+/** POST /api/reports/[id]/vote */
+export interface VoteResponse {
+  votes: number;
+}
+
+/** Trip details handed from the verdict card to the report form (via sessionStorage, not the URL). */
+export interface ReportDraft {
+  serviceType: ServiceType;
+  pickup: PlaceChoice;
+  drop: PlaceChoice | null;
+  sessionType: SessionType | null;
+  quotedPrice: number;
+}
+
 /** A pickup or drop chosen in the PlacePicker. */
 export interface PlaceChoice extends LatLng {
   name: string;
