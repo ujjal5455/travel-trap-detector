@@ -177,6 +177,28 @@ export interface DistanceResponse {
   method: DistanceMethod;
 }
 
+/** Plain-language explanation shown under the verdict. */
+export interface Explanation {
+  /** 2–3 short, friendly sentences */
+  text: string;
+  /** One polite negotiation tip */
+  tip: string;
+  source: "template" | "ai";
+}
+
+/** POST /api/check response */
+export interface CheckResponse {
+  /** fare_checks row id; null if logging failed (the verdict is still valid) */
+  checkId: string | null;
+  verdict: FareVerdict;
+  explanation: Explanation;
+  area: { id: string; name: string } | null;
+  serviceType: ServiceType;
+  sessionType: SessionType | null;
+  quotedPrice: number;
+  tripTime: string;
+}
+
 /** A pickup or drop chosen in the PlacePicker. */
 export interface PlaceChoice extends LatLng {
   name: string;

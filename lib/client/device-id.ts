@@ -1,18 +1,16 @@
 // Anonymous device ID: a random UUID kept in localStorage and sent as `x-device-id`.
 // Known limitation (see README): anyone can clear or forge it. Fine for an MVP without accounts.
 
-export const DEVICE_ID_KEY = "ttd.device-id";
+import { isDeviceId } from "../device";
 
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+export { isDeviceId };
+
+export const DEVICE_ID_KEY = "ttd.device-id";
 
 type KeyValueStore = Pick<Storage, "getItem" | "setItem">;
 
 /** Used when localStorage is blocked (some private modes), so the ID is stable for the page's lifetime. */
 let memoryId: string | null = null;
-
-export function isDeviceId(value: unknown): value is string {
-  return typeof value === "string" && UUID_RE.test(value);
-}
 
 /**
  * Random v4 UUID. `crypto.randomUUID` only exists in secure contexts, so testing on a phone over

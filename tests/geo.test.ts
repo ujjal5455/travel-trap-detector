@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { haversineKm, nearestArea, roundTo, withinRadiusKm } from "@/lib/geo";
+import { boundingBox, haversineKm, nearestArea, roundTo, withinRadiusKm } from "@/lib/geo";
 import type { Area } from "@/lib/types";
 
 const STATION = { lat: 26.1823701, lng: 91.7501234 }; // Guwahati Railway Station
@@ -68,6 +68,28 @@ describe("nearestArea", () => {
   it("picks the nearest centre when circles overlap", () => {
     const big = area("big", 26.5, 91.75, 100);
     expect(nearestArea(STATION, [big, guwahati])?.id).toBe("guwahati");
+  });
+});
+
+describe("boundingBox", () => {
+  it("contains every point on the circle's edge", () => {
+    const box = boundingBox(STATION, 0.5);
+    for (let deg = 0; deg < 360; deg += 15) {
+      const rad = (deg * Math.PI) / 180;
+      // a point ~499 m from the station in direction `deg`
+      const p = {
+        lat: STATION.lat + (0.499 / 111.195) * Math.cos(rad),
+        lng: STATION.lng + (0.499 / (111.195 * Math.cos((STATION.lat * Math.PI) / 180))) * Math.sin(rad),
+      };
+      expect(haversineKm(STATION, p)).toBeLessThan(0.5);
+      expect(p.lat >= box.minLat && p.lat <= box.maxLat && p.lng >= box.minLng && p.lng <= box.maxLng).toBe(true);
+    }
+  });
+
+  it("is about ±0.0045° of latitude for 500 m", () => {
+    const box = boundingBox(STATION, 0.5);
+    expect(box.maxLat - STATION.lat).toBeCloseTo(0.0045, 4);
+    expect(box.maxLng - STATION.lng).toBeGreaterThan(box.maxLat - STATION.lat); // longitude degrees are shorter
   });
 });
 

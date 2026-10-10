@@ -1,7 +1,8 @@
 // Browser-side fetch wrapper for our own /api routes. Adds the anonymous device ID header.
+import { DEVICE_ID_HEADER } from "../device";
 import { getDeviceId } from "./device-id";
 
-export const DEVICE_ID_HEADER = "x-device-id";
+export { DEVICE_ID_HEADER };
 
 export class ApiError extends Error {
   constructor(

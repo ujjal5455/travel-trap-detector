@@ -141,14 +141,23 @@ Interpretations (docs/SPEC.md is silent on these):
 - Zod schemas for the fare-check request move to phase 5, where the route needs them.
 
 ### Phase 5: Fare check API and UI
-- [ ] `lib/rate-limit.ts` (30 checks/hour/device) + tests
-- [ ] `lib/server/device.ts` (read and validate `x-device-id`). The client side (`lib/client/device-id.ts`, `lib/client/api.ts`) was done in phase 1.
-- [ ] `app/api/fare-check/route.ts`: validate, find area, distance, load benchmark, community and nearby scams, score, insert fare_check, return verdict + checkId
-- [ ] `components/fare-check/*`: service picker, place picker (presets, search, map), time (default now), session type for guides, quoted price
-- [ ] `components/map/LazyMap.tsx` + `MapPicker.tsx` (`ssr:false`, loaded only on "Pick on map", CircleMarker/divIcon only)
-- [ ] `components/verdict/*`: colour + icon + text label, fair range in large type, reasons, confidence and source badges ("Demo estimate"), distance method, "Show the driver" and "Report what I paid" buttons
-- [ ] `app/page.tsx`, checked at 375 px
-- [ ] Commit `phase 5: fare check api and ui`
+Built to the user's phase 5 spec (route is `/api/check`, card is `components/VerdictCard.tsx`).
+
+- [x] `lib/device.ts` (shared ID format + header name), `lib/server/device.ts` (reads `x-device-id`)
+- [x] `lib/rate-limit.ts`: 30 fare checks / 5 reports per device per hour + tests (counted from `fare_checks`)
+- [x] `lib/geo.ts` `boundingBox` + tests; `lib/validation.ts` `checkRequestSchema` (guide needs session, others need drop, quote ₹1–₹1,00,000, trip time within 30 days)
+- [x] `lib/explain.ts`: `templateExplanation` (2–3 sentences + one polite tip, only numbers from the verdict, no accusing words) + tests
+- [x] `lib/server/repo.ts`: benchmarks, community candidates (area + service + 180 days), scam candidates (bounding box + 90 days), fare-check count and insert; `lib/server/reference-data.ts` caches areas and benchmarks for 1 h
+- [x] `POST /api/check`: device ID → zod → rate limit → area → distance → benchmark → candidates → `scoreFare` → log to `fare_checks` (logging failure doesn't hide the verdict) → verdict + template explanation. 400 / 422 / 429 / 503 with plain messages.
+- [x] Home form: large icon service buttons (radio group), PlacePicker pickup/drop, guides get "Meeting point" + half/full day instead of drop, "Now" / "Another time", ₹ quote with `inputMode="numeric"`, "Still needed: …" hint
+- [x] `components/VerdictCard.tsx`: colour + icon + text label, fair range in large type, quoted vs expected, source badge ("Demo estimate"), confidence, distance method, area, reasons, explanation + tip, "Report what I paid" link (`/report?checkId=`), "Show the driver" (disabled until phase 9), demo-rates footnote
+- [x] Loading skeleton, error card with "Try again" (keeps the last payload), focus moves to the verdict heading
+- [x] Removed the phase 3 RoutePreview test bench
+- [x] Verified on a production build at 375 px (noon IST): (1) auto Fancy Bazaar → Kamakhya ₹140 → FAIR; (2) taxi ISBT → airport ₹830 (1.4×) → SUSPICIOUS; (3) auto station → Kamakhya ₹330 (2.0×) → HIGH_RISK with the nearby-scam reason. Also: station ₹170 → SUSPICIOUS (escalated), airport → Paltan ₹850 → HIGH_RISK (escalated), guide flow, 400s, error + retry, 44 px minimum tap targets, no horizontal scroll.
+- [x] Commit `phase 5: fare check flow end to end`
+
+Decided with the user: done-checks 1 and 2 use pickups away from the seeded hotspots (station and airport escalate any verdict there, by design).
+Notes: the rate limit is unit-tested only (not exercised live, to avoid writing 30 test rows). Test checks were logged to `fare_checks` under device `5eedc0de-0000-4000-8000-00000000c0de`.
 
 ### Phase 6: AI explanation
 - [ ] `lib/explain-template.ts`: deterministic 2 to 3 sentences + negotiation tip + tests
@@ -337,4 +346,4 @@ on conflict (id) do nothing;
 ---
 
 ## Next up
-Phase 5: fare check API and UI. Decisions D2 to D8 are treated as accepted unless changed.
+Phase 6: AI explanation via Groq (template fallback). Decisions D2 to D8 are treated as accepted unless changed.

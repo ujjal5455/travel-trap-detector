@@ -32,6 +32,20 @@ export function nearestArea<T extends Area>(point: LatLng, areas: readonly T[]):
   return best;
 }
 
+export interface BoundingBox {
+  minLat: number;
+  maxLat: number;
+  minLng: number;
+  maxLng: number;
+}
+
+/** Box that contains every point within radiusKm of center: a cheap DB prefilter before haversineKm. */
+export function boundingBox(center: LatLng, radiusKm: number): BoundingBox {
+  const dLat = (radiusKm / EARTH_RADIUS_KM) * (180 / Math.PI);
+  const dLng = dLat / Math.max(Math.cos(toRad(center.lat)), 1e-6);
+  return { minLat: center.lat - dLat, maxLat: center.lat + dLat, minLng: center.lng - dLng, maxLng: center.lng + dLng };
+}
+
 export function roundTo(value: number, decimals: number): number {
   const f = 10 ** decimals;
   return Math.round(value * f) / f;

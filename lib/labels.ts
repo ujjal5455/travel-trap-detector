@@ -1,5 +1,24 @@
 // Human-readable labels for enum values, shared by reasons, UI and the AI prompt.
-import type { ScamTag, ServiceType, SessionType } from "./types";
+import type { BenchmarkSource, Confidence, ScamTag, ServiceType, SessionType, Verdict } from "./types";
+
+/** Text label shown next to the verdict colour and icon (never colour alone). */
+export const VERDICT_LABELS: Record<Verdict, { title: string; subtitle: string }> = {
+  FAIR: { title: "Fair", subtitle: "This price looks fair" },
+  SUSPICIOUS: { title: "Suspicious", subtitle: "This price may be on the high side" },
+  HIGH_RISK: { title: "High risk", subtitle: "This price may be overpriced" },
+};
+
+export const CONFIDENCE_LABELS: Record<Confidence, string> = {
+  HIGH: "High confidence",
+  MEDIUM: "Medium confidence",
+  LOW: "Low confidence",
+};
+
+export const SOURCE_LABELS: Record<BenchmarkSource, string> = {
+  official: "Official fare chart",
+  app_comparison: "Ride-app comparison",
+  demo_estimate: "Demo estimate",
+};
 
 export const SERVICE_LABELS: Record<ServiceType, string> = {
   auto: "Auto",
