@@ -101,7 +101,7 @@ Changed from the original plan at the user's request: the seed is plain SQL (`su
 - [x] Seed hotspots: Guwahati Railway Station (11 scams from 5 devices; 9 from 4 within 90 days) and Guwahati airport (9 from 5; 8 from 4 within 90 days). Every other place stays below the escalation threshold. Seven places have no reports.
 - [x] Verified locally in PGlite (Postgres in WASM): both files run twice, counts match, escalation and blend samples as designed, constraints reject bad rows
 - [x] `scripts/check-db.ts` (`npx tsx scripts/check-db.ts` or `npm run db:check`): row counts, seed split, bucket privacy, hotspot escalation check
-- [ ] User runs migration + seed in the Supabase SQL Editor and `check-db` prints "All checks passed"
+- [x] User ran migration + seed in the Supabase SQL Editor; `check-db` prints "All checks passed" (2026-10-10, project in Mumbai region, "auto-expose new tables" off)
 - [x] Commit `phase 2: database and seed`
 
 Not fully verified (also listed in the seed.sql header): which Guwahati airport terminal handles arrivals (T1 used, T2 also mapped); Pakyong terminal isn't mapped, so the airfield centre is used; Police Bazar is the centre of the street.
@@ -317,4 +317,4 @@ on conflict (id) do nothing;
 ---
 
 ## Next up
-Finish phase 2: user runs both SQL files in Supabase, then `npm run db:check`. After that, phase 3: places and distance (needs a free ORS key; the Haversine fallback works without one). Decisions D2 to D8 are treated as accepted unless changed.
+Phase 3: places and distance (needs a free ORS key; the Haversine fallback works without one). Decisions D2 to D8 are treated as accepted unless changed.
