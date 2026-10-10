@@ -12,7 +12,7 @@ Status legend: `[x]` done, `[ ]` to do. Each phase ends with: lint, typecheck, t
 |---|---|---|
 | D1 | **LLM uses a free provider, not Anthropic.** `lib/explain.ts` calls any OpenAI-compatible chat-completions endpoint with plain `fetch` (no SDK). Env: `LLM_BASE_URL`, `LLM_API_KEY`, `LLM_MODEL`. Provider: **Groq free tier** (`https://api.groq.com/openai/v1`, default model `llama-3.3-70b-versatile`, check against Groq's current list). Gemini or OpenRouter work with an env change only. Template fallback when no key, on timeout, or when the number guard fails. | **Agreed**, docs/SPEC.md updated |
 | D2 | `fare_checks` gets `result jsonb` and `explanation text`. `/api/explain` takes a `checkId`, never client-supplied verdict JSON, so the client can't inject prompts or run up cost. | Proposed |
-| D3 | Seed areas: Guwahati, Shillong, Sohra, Kaziranga, Tawang, Gangtok, plus regional defaults. All values are `demo_estimate` unless an official chart is supplied. | Proposed |
+| D3 | Seed areas: Guwahati, Shillong, Kaziranga (Kohora), Gangtok, Tawang, plus regional defaults. All values are `demo_estimate` unless an official chart is supplied. | **Agreed** (phase 2 spec) |
 | D4 | Demo mode: `?demo=1` shows 3 scenario chips (FAIR, SUSPICIOUS, HIGH_RISK with community escalation at Guwahati Railway Station), a fixed trip time, and the ORS fallback forced. | Proposed |
 | D5 | `report_votes` powers a "This happened to me too" button on map reports. The count is display-only and does not affect escalation. | Proposed |
 | D6 | Offline: cached app shell plus a benchmark-only "Offline estimate" scored in the browser. No queue for offline reports unless requested. | Proposed |
@@ -52,9 +52,9 @@ lib/                            pure, unit-tested, no I/O
   server/   repo.ts device.ts               ('server-only')
   client/   device-id.ts api.ts offline-store.ts
 tests/                          *.test.ts
-supabase/migrations/0001_init.sql
-scripts/seed.ts                 idempotent upsert (npm run seed)
-data/seed/                      areas.ts places.ts benchmarks.ts reports.ts
+supabase/migrations/001_init.sql
+supabase/seed.sql               idempotent; benchmark table in the header
+scripts/check-db.ts             row counts + seed sanity (npm run db:check)
 public/                         sw.js, icons
 docs/PLAN.md  docs/DEMO.md
 .env.example  README.md  vitest.config.mts
@@ -94,14 +94,20 @@ Phase 1 notes:
 - The dev indicator was moved to the top right so it doesn't cover the bottom nav.
 
 ### Phase 2: Database and seed
-- [ ] `supabase/migrations/0001_init.sql` (schema below, RLS, private `evidence` bucket)
-- [ ] `data/seed/areas.ts`, `places.ts`, `benchmarks.ts` (`demo_estimate`, "Replace with official fare chart"), `reports.ts` (`is_seed = true`, dates relative to now, distinct device IDs for the escalation demo)
-- [ ] `scripts/seed.ts` (idempotent), `npm run seed`
-- [ ] `lib/server/repo.ts` (typed queries on top of `lib/supabase-server.ts`, which exists already)
-- [ ] Migration applied and seed run against the hosted project
-- [ ] Commit `phase 2: database and seed`
+Changed from the original plan at the user's request: the seed is plain SQL (`supabase/seed.sql`) rather than a TS script, there are 5 areas (Sohra dropped), and there's a `check-db` script. `lib/server/repo.ts` moves to phase 3, where the first queries are needed.
+
+- [x] `supabase/migrations/001_init.sql`: 6 tables, check constraints, indexes (area+service+created_at, created_at, pickup lat/lng, device+created_at), RLS on with no policies, grants revoked from anon/authenticated, private `evidence` bucket (2 MB, images only). Idempotent.
+- [x] `supabase/seed.sql`: 5 areas, 28 places (OSM coordinates, element IDs in comments), 30 benchmarks (25 area rows + 5 regional defaults, all `demo_estimate`, number table at the top), 100 seed reports (70 normal, 30 scams, 2 to 119 days old). Report prices are computed from the benchmark rows, so they follow edits. Idempotent, with a sanity check that rolls back on a bad place name.
+- [x] Seed hotspots: Guwahati Railway Station (11 scams from 5 devices; 9 from 4 within 90 days) and Guwahati airport (9 from 5; 8 from 4 within 90 days). Every other place stays below the escalation threshold. Seven places have no reports.
+- [x] Verified locally in PGlite (Postgres in WASM): both files run twice, counts match, escalation and blend samples as designed, constraints reject bad rows
+- [x] `scripts/check-db.ts` (`npx tsx scripts/check-db.ts` or `npm run db:check`): row counts, seed split, bucket privacy, hotspot escalation check
+- [ ] User runs migration + seed in the Supabase SQL Editor and `check-db` prints "All checks passed"
+- [x] Commit `phase 2: database and seed`
+
+Not fully verified (also listed in the seed.sql header): which Guwahati airport terminal handles arrivals (T1 used, T2 also mapped); Pakyong terminal isn't mapped, so the airfield centre is used; Police Bazar is the centre of the street.
 
 ### Phase 3: Places and distance
+- [ ] `lib/server/repo.ts` (typed queries on top of `lib/supabase-server.ts`)
 - [ ] `lib/geo.ts`: haversine, bounding box, `findArea` (point in area radius) + tests
 - [ ] `lib/distance.ts`: ORS driving-car, 3 s timeout, haversine x 1.3 fallback, returns method, caches by rounded coords + tests
 - [ ] `lib/nominatim.ts`: custom User-Agent, NE India viewbox, `countrycodes=in`, 1 req/s throttle, cache
@@ -179,7 +185,7 @@ Phase 1 notes:
 
 ---
 
-## Draft schema (`supabase/migrations/0001_init.sql`)
+## Draft schema (superseded: the live version is `supabase/migrations/001_init.sql`)
 
 ```sql
 create table areas (
@@ -311,4 +317,4 @@ on conflict (id) do nothing;
 ---
 
 ## Next up
-Phase 2: Database and seed. Needs a free Supabase project, with the URL and secret key in `.env.local`. Decisions D2 to D8 are treated as accepted unless changed.
+Finish phase 2: user runs both SQL files in Supabase, then `npm run db:check`. After that, phase 3: places and distance (needs a free ORS key; the Haversine fallback works without one). Decisions D2 to D8 are treated as accepted unless changed.
