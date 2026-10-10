@@ -1,7 +1,15 @@
 // zod schemas for request input. Route handlers validate with these before touching anything else.
 import { z } from "zod";
 import { PLACE_SEARCH } from "./config";
-import { SERVICE_TYPES, SESSION_TYPES } from "./types";
+import {
+  BENCHMARK_SOURCES,
+  CONFIDENCE_LEVELS,
+  DISTANCE_METHODS,
+  SCAM_TAGS,
+  SERVICE_TYPES,
+  SESSION_TYPES,
+  VERDICTS,
+} from "./types";
 
 export const latLngSchema = z.object({
   lat: z.number().min(-90).max(90),
@@ -50,6 +58,31 @@ export const checkRequestSchema = z
   });
 
 export type CheckRequest = z.infer<typeof checkRequestSchema>;
+
+/**
+ * POST /api/explain body. The verdict comes from the browser, so every field is bounded:
+ * the model only ever sees short, typed data, and the number guard checks against it.
+ */
+export const fareVerdictSchema = z.object({
+  verdict: z.enum(VERDICTS),
+  quotedPrice: z.number().positive().max(MAX_QUOTE),
+  ratio: z.number().min(0).max(10_000),
+  expectedFare: z.number().positive().max(1_000_000),
+  fairRange: z.object({ min: z.number().min(0).max(1_000_000), max: z.number().min(0).max(1_000_000) }),
+  distanceKm: z.number().min(0).max(5_000).nullable(),
+  distanceMethod: z.enum(DISTANCE_METHODS).nullable(),
+  benchmarkSource: z.enum(BENCHMARK_SOURCES),
+  communitySampleSize: z.number().int().min(0).max(1_000_000),
+  nearbyScam: z.object({
+    count: z.number().int().min(0).max(1_000_000),
+    distinctDevices: z.number().int().min(0).max(1_000_000),
+    topTags: z.array(z.enum(SCAM_TAGS)).max(SCAM_TAGS.length),
+  }),
+  confidence: z.enum(CONFIDENCE_LEVELS),
+  reasons: z.array(z.string().max(400)).max(12),
+});
+
+export const explainRequestSchema = z.object({ verdict: fareVerdictSchema });
 
 /** First issue as a short, user-safe message. */
 export function firstIssue(error: z.ZodError): string {

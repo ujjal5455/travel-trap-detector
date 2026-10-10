@@ -90,7 +90,7 @@ export async function POST(request: Request) {
     const response: CheckResponse = {
       checkId,
       verdict,
-      explanation: templateExplanation(verdict, body.quotedPrice),
+      explanation: templateExplanation(verdict),
       area: area ? { id: area.id, name: area.name } : null,
       serviceType: body.serviceType,
       sessionType: isGuide ? (body.sessionType ?? null) : null,

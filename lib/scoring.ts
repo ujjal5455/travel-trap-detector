@@ -294,6 +294,7 @@ export function scoreFare(input: ScoreInput): FareVerdict {
 
   return {
     verdict,
+    quotedPrice,
     ratio: Math.round(ratio * 100) / 100,
     expectedFare,
     fairRange,

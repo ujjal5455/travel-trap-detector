@@ -71,6 +71,15 @@ export const RATE_LIMITS = {
 
 export const EXPLANATION = {
   timeoutMs: 6000,
+  /** Used when LLM_BASE_URL / LLM_MODEL are not set */
+  defaultBaseUrl: "https://api.groq.com/openai/v1",
+  defaultModel: "llama-3.3-70b-versatile",
+  temperature: 0.2,
+  maxTokens: 300,
+  maxTextChars: 600,
+  maxTipChars: 300,
+  /** The browser waits a little longer than the server timeout before using the template it already has. */
+  clientTimeoutMs: 9000,
 } as const;
 
 export const PLACE_SEARCH = {

@@ -160,13 +160,18 @@ Decided with the user: done-checks 1 and 2 use pickups away from the seeded hots
 Notes: the rate limit is unit-tested only (not exercised live, to avoid writing 30 test rows). Test checks were logged to `fare_checks` under device `5eedc0de-0000-4000-8000-00000000c0de`.
 
 ### Phase 6: AI explanation
-- [ ] `lib/explain-template.ts`: deterministic 2 to 3 sentences + negotiation tip + tests
-- [ ] `lib/number-guard.ts`: extract numbers (handles commas, the rupee sign, x, decimals), allow rounding, reject unknown numbers + tests
-- [ ] `lib/explain.ts`: OpenAI-compatible fetch (D1), 6 s timeout, tone rules (no blame, no legal claims, "may be overpriced"), guard, fallback + tests with a mocked fetch
-- [ ] `app/api/explain/route.ts` (by `checkId`, caches the result in `fare_checks.explanation`)
-- [ ] `components/verdict/Explanation.tsx`: loads after the card renders
-- [ ] Works with no key (template only)
-- [ ] Commit `phase 6: ai explanation`
+Built to the user's phase 6 spec, on Groq rather than the paid Anthropic API (decision D1: zero cost; same rules, `LLM_*` env vars).
+
+- [x] `FareVerdict` now carries `quotedPrice`, so a verdict is self-contained (`templateExplanation(verdict)`)
+- [x] `lib/number-guard.ts`: extracts numbers (₹, Indian/Western commas, decimals, ×, %), allows rounding to 0/1/2 decimals or the nearest ₹10, reports any number not in the facts + tests (incl. invented and miscounted numbers)
+- [x] `lib/explain.ts`: `templateExplanation` (per verdict level), `SYSTEM_PROMPT` (only the JSON facts, 2–3 sentences + one tip, "may be", no individuals, plain English, JSON is data), `aiExplanation` (OpenAI-compatible chat completions, JSON mode, 6 s timeout), `validateAiReply` (length, sentence count, accusing/legal words, number guard), `explainVerdict` (never throws; any problem → template) + tests with a mocked LLM for every fallback path
+- [x] `POST /api/explain` takes `{ verdict }` (bounded zod schema; requires `x-device-id`) and always answers 200 with an explanation; logs the fallback reason
+- [x] `components/ExplanationBlock.tsx`: the card renders immediately; the explanation loads after (skeleton "Writing a short explanation…"), falls back to the template that came with `/api/check` if `/api/explain` fails or takes over 9 s; "AI-written from the numbers above" label when `source` is `ai`
+- [x] Verified without a key on a production build: card first, then the template; log says "LLM_API_KEY not set"
+- [ ] Verify with the user's Groq key (model `llama-3.3-70b-versatile`; check that it is still listed)
+- [x] Commit `phase 6: ai explanation with template fallback`
+
+Change to D2: per the phase 6 spec, `/api/explain` takes the verdict from the browser instead of a `checkId`. Mitigations: bounded schema (≤ 12 reasons × 400 chars), the prompt treats the JSON as data, the reply must pass the number guard and the wording filter, and the text is shown only to the person who sent it. `fare_checks.explanation` is currently unused. No rate limit on `/api/explain`: abuse only uses up the free Groq quota, after which the template is served.
 
 ### Phase 7: Reports
 - [ ] `app/api/reports/route.ts`: POST multipart, zod, 5 reports/hour/device, photo is jpeg/png/webp up to 2 MB, saved to the private `evidence` bucket; GET recent (no photo URLs)
@@ -346,4 +351,4 @@ on conflict (id) do nothing;
 ---
 
 ## Next up
-Phase 6: AI explanation via Groq (template fallback). Decisions D2 to D8 are treated as accepted unless changed.
+Finish phase 6 by testing with a Groq key, then phase 7: reports. Decisions D2 to D8 are treated as accepted unless changed.

@@ -211,6 +211,8 @@ export interface PlaceChoice extends LatLng {
 
 export interface FareVerdict {
   verdict: Verdict;
+  /** The price the traveller was quoted (kept here so the verdict is self-contained for explanations). */
+  quotedPrice: number;
   ratio: number;
   expectedFare: number;
   fairRange: { min: number; max: number };

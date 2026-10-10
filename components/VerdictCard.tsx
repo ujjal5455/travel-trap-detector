@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { ExplanationBlock } from "@/components/ExplanationBlock";
 import type { Ref } from "react";
 import { formatINR, formatKm, formatRatio } from "@/lib/format";
 import { CONFIDENCE_LABELS, SOURCE_LABELS, VERDICT_LABELS } from "@/lib/labels";
@@ -99,16 +100,7 @@ export function VerdictCard({ result, headingRef }: { result: CheckResponse; hea
           </ul>
         </section>
 
-        <section className="rounded-xl bg-canvas p-3 text-sm" aria-labelledby="explain-title">
-          <h3 id="explain-title" className="sr-only">
-            Explanation
-          </h3>
-          <p>{explanation.text}</p>
-          <p className="mt-2">
-            <span className="font-semibold">Tip: </span>
-            {explanation.tip}
-          </p>
-        </section>
+        <ExplanationBlock verdict={v} fallback={explanation} />
 
         <div className="grid gap-2">
           <button
