@@ -158,6 +158,34 @@ export interface FareCheckRow {
 }
 
 // ---------------------------------------------------------------------------
+// API response shapes
+
+/** GET /api/places */
+export interface PlacesResponse {
+  areas: (Pick<Area, "id" | "name" | "state"> & { places: Omit<Place, "areaId">[] })[];
+}
+
+/** GET /api/geocode?q= */
+export interface GeocodeResponse {
+  results: { name: string; displayName: string; lat: number; lng: number; osmId: string }[];
+}
+
+/** POST /api/distance */
+export interface DistanceResponse {
+  distanceKm: number;
+  durationMin?: number;
+  method: DistanceMethod;
+}
+
+/** A pickup or drop chosen in the PlacePicker. */
+export interface PlaceChoice extends LatLng {
+  name: string;
+  source: "preset" | "search" | "map";
+  /** Area name for presets, e.g. "Guwahati" */
+  areaName?: string;
+}
+
+// ---------------------------------------------------------------------------
 
 export interface FareVerdict {
   verdict: Verdict;

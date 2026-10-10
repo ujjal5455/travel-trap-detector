@@ -45,7 +45,23 @@ export const TIME_ZONE = "Asia/Kolkata";
 export const DISTANCE = {
   /** Haversine fallback multiplier to approximate road distance */
   roadFactor: 1.3,
-  orsTimeoutMs: 3000,
+  orsTimeoutMs: 4000,
+  /** HeiGIT's current ORS endpoint (the old api.openrouteservice.org has a far lower daily quota) */
+  orsBaseUrl: "https://api.heigit.org/openrouteservice",
+  /** Road results are cached by coordinates rounded to this many decimals (4 ≈ 11 m) */
+  cacheDecimals: 4,
+  cacheMaxEntries: 500,
+} as const;
+
+/** Nominatim place search, limited to North East India (incl. Sikkim and the Siliguri corridor). */
+export const GEOCODE = {
+  baseUrl: "https://nominatim.openstreetmap.org/search",
+  userAgent: "TravelTrapDetector/0.1 (CodeWar 8.0 hackathon prototype)",
+  /** west, north, east, south: Nominatim's viewbox order is lon1,lat1,lon2,lat2 */
+  bbox: { west: 88.0, north: 29.5, east: 97.5, south: 21.9 },
+  maxResults: 8,
+  cacheTtlMs: 24 * 60 * 60 * 1000,
+  cacheMaxEntries: 500,
 } as const;
 
 export const RATE_LIMITS = {
@@ -59,6 +75,7 @@ export const EXPLANATION = {
 
 export const PLACE_SEARCH = {
   minQueryLength: 3,
+  maxQueryLength: 100,
   debounceMs: 500,
   /** Nominatim usage policy: max 1 request per second */
   nominatimMinIntervalMs: 1000,

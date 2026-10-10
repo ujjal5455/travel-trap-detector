@@ -106,14 +106,23 @@ Changed from the original plan at the user's request: the seed is plain SQL (`su
 
 Not fully verified (also listed in the seed.sql header): which Guwahati airport terminal handles arrivals (T1 used, T2 also mapped); Pakyong terminal isn't mapped, so the airfield centre is used; Police Bazar is the centre of the street.
 
-### Phase 3: Places and distance
-- [ ] `lib/server/repo.ts` (typed queries on top of `lib/supabase-server.ts`)
-- [ ] `lib/geo.ts`: haversine, bounding box, `findArea` (point in area radius) + tests
-- [ ] `lib/distance.ts`: ORS driving-car, 3 s timeout, haversine x 1.3 fallback, returns method, caches by rounded coords + tests
-- [ ] `lib/nominatim.ts`: custom User-Agent, NE India viewbox, `countrycodes=in`, 1 req/s throttle, cache
-- [ ] `lib/places.ts`: merge seeded matches first, then Nominatim + tests
-- [ ] `app/api/places/route.ts`
-- [ ] Commit `phase 3: places and distance`
+### Phase 3: Places, area detection and distance
+Built to the user's phase 3 spec. Differences from the first plan: separate `/api/geocode` and `/api/distance` routes; no `lib/places.ts` (PlacePicker merges seeded matches with OSM results on the client); timeout 4 s; × 1.3 everywhere (per-area road factor declined for now, see risks).
+
+- [x] `lib/geo.ts`: `haversineKm`, `withinRadiusKm`, `nearestArea` (null = regional default), `roundTo` + tests
+- [x] `lib/lru-cache.ts`: in-memory LRU with TTL + tests
+- [x] `lib/distance.ts`: ORS driving-car at `api.heigit.org/openrouteservice` (2,000/day; the old host allows only about 200), 4 s timeout, Haversine × 1.3 fallback on any error, returns `method`, caches road results by coordinates rounded to 4 decimals (estimates are never cached) + tests
+- [x] `lib/nominatim.ts`: custom User-Agent, NE India bounding box (`bounded=1`, `countrycodes=in`), serialised 1 req/s throttle, 24 h cache + tests with a fake clock
+- [x] `lib/server/repo.ts`: `listAreas`, `listPlaces`; `lib/validation.ts`: zod schemas
+- [x] `GET /api/places`: presets grouped by area, `"use cache"` + `cacheLife("hours")` and `Cache-Control: max-age=3600`; runs at request time, so builds don't need the DB
+- [x] `GET /api/geocode?q=`: Nominatim proxy, 400 below 3 characters
+- [x] `POST /api/distance`: `{ distanceKm, durationMin?, method }`
+- [x] `components/PlacePicker.tsx`: Popular (native select grouped by area), Search (seeded matches first, then OSM, deduped within 100 m), Map (tap to pick). `components/map/MapPointPicker.tsx` loads client-only via `next/dynamic` with `ssr: false`. Default marker fixed by pointing `L.Icon.Default` at `/public/leaflet/*.png`.
+- [x] Temporary `components/fare-check/RoutePreview.tsx` on `/` (phase 5 folds it into the form)
+- [x] Verified in the browser at 375 px: Railway Station → Kamakhya = 6.8 km, `method: road`. With a disabled key (`dev-no-ors` launch config): ≈ 6.3 km, `method: estimate`. Map tap, search and marker icon all work. 56 tests pass; lint, typecheck and build are clean.
+- [x] Commit `phase 3: places, area detection and distance`
+
+Notes: Next 16 allows only one `next dev` per project folder, so stop `dev` before starting `dev-no-ors`. `/api/distance` and `/api/geocode` have no rate limit yet; the ORS quota could be drained by abuse (see risks).
 
 ### Phase 4: Scoring engine
 - [ ] `lib/time.ts`: IST hour, night window crossing midnight + tests
@@ -311,10 +320,12 @@ on conflict (id) do nothing;
 | Heavy Indic fonts on slow connections | Load only in the Show-the-driver card |
 | `create-next-app` refuses a non-empty dir | Scaffold in a temp dir and move the files in |
 | Supabase Free pauses a project after about 7 days without activity | Open the app or run a query in the days before the demo; unpausing is free |
+| Haversine × 1.3 fallback underestimates hill roads about 2× (Pakyong → Gangtok: 14 km vs 26.5 km by road), so a fair hill fare could show HIGH_RISK when ORS is unavailable | ORS is the main path; estimates are labelled. Option kept open: per-area `road_factor` column |
+| `/api/distance` has no rate limit, so abuse could use up the ORS daily quota | Estimate fallback keeps the app working; add a per-device limit in phase 5 if needed |
 | Free quotas run out during the demo (ORS, Groq, Nominatim) | Every one has a free fallback; demo mode forces the fallbacks |
 | Device ID spoofing; count-then-insert rate-limit race | Documented as known MVP limitations |
 
 ---
 
 ## Next up
-Phase 3: places and distance (needs a free ORS key; the Haversine fallback works without one). Decisions D2 to D8 are treated as accepted unless changed.
+Phase 4: scoring engine (`lib/time.ts`, `lib/scoring.ts`, full unit tests). Decisions D2 to D8 are treated as accepted unless changed.
