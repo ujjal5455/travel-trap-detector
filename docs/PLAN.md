@@ -202,10 +202,16 @@ Built to the user's phase 8 spec, with two agreed changes: cells are circles cen
 - [x] Commit `phase 8: scam hotspot map`
 
 ### Phase 9: Show-the-driver card
-- [ ] `lib/driver-lines.ts`: polite lines in EN / AS / BN / HI
-- [ ] `components/driver/ShowDriverCard.tsx`: full screen, high contrast, fair range, language switcher, Noto Sans Bengali / Devanagari loaded only here
-- [ ] Native-speaker check of translations (D7)
-- [ ] Commit `phase 9: show the driver card`
+Built to the user's phase 9 spec.
+
+- [x] `lib/i18n/driver-card.json`: English, Assamese, Bengali, Hindi; 8 strings each; every non-English string marked "needs native speaker review" (change to "reviewed by <name>, <date>" once checked)
+- [x] `lib/i18n/driver-card.ts`: typed access, `driverLine` fills the fair range (word joiners keep "₹150–₹190" on one line) + tests (all keys present, review flags, placeholders, correct script, Assamese ৰ/ৱ)
+- [x] `components/driver/ShowDriverCard.tsx`: native `<dialog>` (focus trap, Esc), full screen, black on white, from → to or guide session, fair range in very large type, polite line, thank you, honest footer ("demo estimate"); language switcher with native names, remembered in localStorage; `lang` attributes; Noto Sans Bengali / Devanagari via next/font (script subsets, no preload) inside a chunk loaded only when the card opens; Wake Lock taken on open, re-taken when the tab returns, released on close
+- [x] Verified on a production build at 375 px in all four languages: fonts loaded, no overflow, range on one line; Esc and × close it; language remembered. The in-app test browser denies Wake Lock (NotAllowedError) and the card continues normally; untested on a real phone.
+- [ ] Native speakers check the Assamese, Bengali and Hindi strings (D7)
+- [x] Commit `phase 9: show the driver card`
+
+Note: place names stay in English (they come from OSM / the seed list).
 
 ### Phase 10: Offline / PWA
 - [ ] `app/manifest.ts`, icons
@@ -364,4 +370,4 @@ on conflict (id) do nothing;
 ---
 
 ## Next up
-Phase 9: show-the-driver card. Decisions D2 to D8 are treated as accepted unless changed.
+Phase 10: offline / PWA. Decisions D2 to D8 are treated as accepted unless changed.

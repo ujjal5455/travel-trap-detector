@@ -1,12 +1,16 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
+import { useState, type Ref } from "react";
 import { ExplanationBlock } from "@/components/ExplanationBlock";
-import type { Ref } from "react";
 import { formatINR, formatKm, formatRatio } from "@/lib/format";
 import { CONFIDENCE_LABELS, SOURCE_LABELS, VERDICT_LABELS } from "@/lib/labels";
 import { saveReportDraft } from "@/lib/client/report-draft";
 import type { CheckResponse, ReportDraft, Verdict } from "@/lib/types";
+
+// Loaded on first open, so the card (and its Indic fonts) cost nothing until needed.
+const ShowDriverCard = dynamic(() => import("@/components/driver/ShowDriverCard"), { ssr: false });
 
 const STYLES: Record<Verdict, { band: string; text: string; border: string }> = {
   FAIR: { band: "bg-fair-soft", text: "text-fair", border: "border-fair" },
@@ -63,6 +67,7 @@ export function VerdictCard({
   headingRef?: Ref<HTMLHeadingElement>;
 }) {
   const router = useRouter();
+  const [showDriver, setShowDriver] = useState(false);
   const { verdict: v, explanation, quotedPrice, area } = result;
   const style = STYLES[v.verdict];
   const label = VERDICT_LABELS[v.verdict];
@@ -116,11 +121,10 @@ export function VerdictCard({
         <div className="grid gap-2">
           <button
             type="button"
-            disabled
-            title="Coming soon"
-            className="min-h-12 rounded-xl bg-ink px-4 font-semibold text-white disabled:opacity-50"
+            onClick={() => setShowDriver(true)}
+            className="min-h-12 rounded-xl bg-ink px-4 font-semibold text-white"
           >
-            Show the driver <span className="text-xs font-normal">(coming soon)</span>
+            Show the driver
           </button>
           <button
             type="button"
@@ -140,6 +144,15 @@ export function VerdictCard({
           </p>
         )}
       </div>
+
+      {showDriver && (
+        <ShowDriverCard
+          fairRange={v.fairRange}
+          trip={draft}
+          benchmarkSource={v.benchmarkSource}
+          onClose={() => setShowDriver(false)}
+        />
+      )}
     </article>
   );
 }

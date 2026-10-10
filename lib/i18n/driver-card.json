@@ -1,0 +1,65 @@
+{
+  "_about": "Driver-facing text for the 'Show the driver' card. {min} and {max} are replaced with rupee amounts. Every non-English string is a first draft and must be checked by a native speaker before real use: change its review value to 'reviewed by <name>, <date>' once checked.",
+  "languages": [
+    {
+      "code": "en",
+      "name": "English",
+      "nativeName": "English",
+      "strings": {
+        "title": { "text": "Fair price for this trip", "review": "source text" },
+        "from": { "text": "From", "review": "source text" },
+        "to": { "text": "To", "review": "source text" },
+        "guide": { "text": "Local guide", "review": "source text" },
+        "halfDay": { "text": "Half day", "review": "source text" },
+        "fullDay": { "text": "Full day", "review": "source text" },
+        "line": { "text": "The usual fare for this trip is {min}–{max}. Can we agree on this?", "review": "source text" },
+        "thanks": { "text": "Thank you!", "review": "source text" }
+      }
+    },
+    {
+      "code": "as",
+      "name": "Assamese",
+      "nativeName": "অসমীয়া",
+      "strings": {
+        "title": { "text": "এই যাত্ৰাৰ উচিত ভাড়া", "review": "needs native speaker review" },
+        "from": { "text": "ক'ৰ পৰা", "review": "needs native speaker review" },
+        "to": { "text": "ক'লৈ", "review": "needs native speaker review" },
+        "guide": { "text": "স্থানীয় গাইড", "review": "needs native speaker review" },
+        "halfDay": { "text": "আধা দিন", "review": "needs native speaker review" },
+        "fullDay": { "text": "গোটেই দিন", "review": "needs native speaker review" },
+        "line": { "text": "এই যাত্ৰাৰ সাধাৰণ ভাড়া {min}–{max}। আমি এই দামত মান্তি হ'ব পাৰোঁনে?", "review": "needs native speaker review" },
+        "thanks": { "text": "ধন্যবাদ!", "review": "needs native speaker review" }
+      }
+    },
+    {
+      "code": "bn",
+      "name": "Bengali",
+      "nativeName": "বাংলা",
+      "strings": {
+        "title": { "text": "এই যাত্রার ন্যায্য ভাড়া", "review": "needs native speaker review" },
+        "from": { "text": "কোথা থেকে", "review": "needs native speaker review" },
+        "to": { "text": "কোথায়", "review": "needs native speaker review" },
+        "guide": { "text": "স্থানীয় গাইড", "review": "needs native speaker review" },
+        "halfDay": { "text": "অর্ধেক দিন", "review": "needs native speaker review" },
+        "fullDay": { "text": "পুরো দিন", "review": "needs native speaker review" },
+        "line": { "text": "এই যাত্রার সাধারণ ভাড়া {min}–{max}। আমরা কি এই দামে রাজি হতে পারি?", "review": "needs native speaker review" },
+        "thanks": { "text": "ধন্যবাদ!", "review": "needs native speaker review" }
+      }
+    },
+    {
+      "code": "hi",
+      "name": "Hindi",
+      "nativeName": "हिन्दी",
+      "strings": {
+        "title": { "text": "इस यात्रा का उचित किराया", "review": "needs native speaker review" },
+        "from": { "text": "कहाँ से", "review": "needs native speaker review" },
+        "to": { "text": "कहाँ तक", "review": "needs native speaker review" },
+        "guide": { "text": "स्थानीय गाइड", "review": "needs native speaker review" },
+        "halfDay": { "text": "आधा दिन", "review": "needs native speaker review" },
+        "fullDay": { "text": "पूरा दिन", "review": "needs native speaker review" },
+        "line": { "text": "इस यात्रा का सामान्य किराया {min}–{max} है। क्या हम इस पर सहमत हो सकते हैं?", "review": "needs native speaker review" },
+        "thanks": { "text": "धन्यवाद!", "review": "needs native speaker review" }
+      }
+    }
+  ]
+}
