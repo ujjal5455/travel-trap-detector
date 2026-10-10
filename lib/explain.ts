@@ -109,6 +109,8 @@ export interface AiOptions {
   model?: string;
   fetchFn?: typeof fetch;
   timeoutMs?: number;
+  /** Sent as `reasoning_effort` for reasoning models (e.g. "low" for gpt-oss, "none" for Qwen 3). Omitted when unset. */
+  reasoningEffort?: string;
   /** Called with the reason whenever the template is used instead. */
   onFallback?: (reason: string) => void;
 }
@@ -133,6 +135,7 @@ export async function aiExplanation(v: FareVerdict, opts: AiOptions): Promise<Ex
     model = EXPLANATION.defaultModel,
     fetchFn = fetch,
     timeoutMs = EXPLANATION.timeoutMs,
+    reasoningEffort,
   } = opts;
   if (!apiKey) throw new Error("LLM_API_KEY not set");
 
@@ -144,6 +147,7 @@ export async function aiExplanation(v: FareVerdict, opts: AiOptions): Promise<Ex
       temperature: EXPLANATION.temperature,
       max_tokens: EXPLANATION.maxTokens,
       response_format: { type: "json_object" },
+      ...(reasoningEffort ? { reasoning_effort: reasoningEffort } : {}),
       messages: [
         { role: "system", content: SYSTEM_PROMPT },
         { role: "user", content: JSON.stringify(explanationFacts(v)) },
@@ -151,7 +155,14 @@ export async function aiExplanation(v: FareVerdict, opts: AiOptions): Promise<Ex
     }),
     signal: AbortSignal.timeout(timeoutMs),
   });
-  if (!res.ok) throw new Error(`LLM responded ${res.status}`);
+  if (!res.ok) {
+    // OpenAI-style error bodies carry a useful message (e.g. Groq's "json_validate_failed").
+    const detail = await res
+      .json()
+      .then((b: { error?: { message?: string; code?: string } }) => b.error?.code ?? b.error?.message ?? "")
+      .catch(() => "");
+    throw new Error(`LLM responded ${res.status}${detail ? ` (${String(detail).slice(0, 120)})` : ""}`);
+  }
 
   const body = (await res.json()) as { choices?: { message?: { content?: string } }[] };
   const content = body.choices?.[0]?.message?.content;

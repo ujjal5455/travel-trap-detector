@@ -143,6 +143,23 @@ describe("aiExplanation", () => {
     expect(JSON.parse(body.messages[1].content)).toEqual(explanationFacts(highRisk));
   });
 
+  it("sends reasoning_effort only when configured", async () => {
+    const withEffort = llmReply(good);
+    await aiExplanation(highRisk, { apiKey: "k", fetchFn: withEffort, reasoningEffort: "none" });
+    expect(JSON.parse(String(withEffort.mock.calls[0][1]?.body)).reasoning_effort).toBe("none");
+
+    const without = llmReply(good);
+    await aiExplanation(highRisk, { apiKey: "k", fetchFn: without });
+    expect(JSON.parse(String(without.mock.calls[0][1]?.body))).not.toHaveProperty("reasoning_effort");
+  });
+
+  it("includes the provider's error code in the failure reason", async () => {
+    const fetchFn = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(Response.json({ error: { code: "rate_limit_exceeded", message: "slow down" } }, { status: 429 }));
+    await expect(aiExplanation(highRisk, { apiKey: "k", fetchFn })).rejects.toThrow("LLM responded 429 (rate_limit_exceeded)");
+  });
+
   it("system prompt carries the docs/SPEC.md rules", () => {
     expect(SYSTEM_PROMPT).toMatch(/only the facts/i);
     expect(SYSTEM_PROMPT).toMatch(/2 or 3 short sentences/);

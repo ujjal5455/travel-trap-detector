@@ -17,7 +17,7 @@ Two requirements from the problem statement must be obvious in the demo:
 - Leaflet + react-leaflet + OpenStreetMap tiles. Leaflet uses `window`, so map components must be client-only (`dynamic(..., { ssr: false })`).
 - Road distance: OpenRouteService directions API (driving-car), called from the server. Fallback: Haversine distance × 1.3. Always return which method was used.
 - Place search: a seeded list of popular NER places first, Nominatim search second (server-side, custom User-Agent, debounced, max 1 request per second).
-- LLM: free provider (Groq by default) through any OpenAI-compatible chat-completions endpoint, called with plain `fetch` from the server only. No vendor SDK. Configure with `LLM_BASE_URL`, `LLM_API_KEY` and `LLM_MODEL`; switching provider is an env change only. The app must work fully with no API key by falling back to a template explanation.
+- LLM: free provider (Groq by default) through any OpenAI-compatible chat-completions endpoint, called with plain `fetch` from the server only. No vendor SDK. Configure with `LLM_BASE_URL`, `LLM_API_KEY`, `LLM_MODEL` and optional `LLM_REASONING_EFFORT`; switching provider is an env change only. The app must work fully with no API key by falling back to a template explanation.
 - Validation: zod. Tests: Vitest. Deploy: Vercel.
 
 ## Environment variables
@@ -30,7 +30,8 @@ SUPABASE_SECRET_KEY=          # service role / secret key, server only
 ORS_API_KEY=                  # openrouteservice.org, server only
 LLM_BASE_URL=https://api.groq.com/openai/v1   # any OpenAI-compatible endpoint
 LLM_API_KEY=                  # optional; free key from console.groq.com
-LLM_MODEL=llama-3.3-70b-versatile             # check Groq's current model list
+LLM_MODEL=qwen/qwen3.8-27b                    # check Groq's current model list
+LLM_REASONING_EFFORT=none                     # optional: "none" for Qwen 3, "low" for gpt-oss
 ```
 
 ## Data model

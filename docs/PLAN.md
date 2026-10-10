@@ -168,7 +168,7 @@ Built to the user's phase 6 spec, on Groq rather than the paid Anthropic API (de
 - [x] `POST /api/explain` takes `{ verdict }` (bounded zod schema; requires `x-device-id`) and always answers 200 with an explanation; logs the fallback reason
 - [x] `components/ExplanationBlock.tsx`: the card renders immediately; the explanation loads after (skeleton "Writing a short explanation…"), falls back to the template that came with `/api/check` if `/api/explain` fails or takes over 9 s; "AI-written from the numbers above" label when `source` is `ai`
 - [x] Verified without a key on a production build: card first, then the template; log says "LLM_API_KEY not set"
-- [ ] Verify with the user's Groq key (model `llama-3.3-70b-versatile`; check that it is still listed)
+- [x] Verified with the user's Groq key. `llama-3.3-70b-versatile` is no longer offered; compared gpt-oss-20b, gpt-oss-120b and qwen3.8-27b on 3 verdicts × 2 rounds: all passed the number guard once `reasoning_effort` was set and the token budget raised (reasoning tokens had truncated the JSON, giving 400 json_validate_failed). Chose `qwen/qwen3.8-27b` with `LLM_REASONING_EFFORT=none`: plainest English, ~350 ms. Groq's free per-minute token limit returned 429 after ~9 rapid calls, so `/api/explain` now caches AI results per verdict for 1 h; 429s fall back to the template.
 - [x] Commit `phase 6: ai explanation with template fallback`
 
 Change to D2: per the phase 6 spec, `/api/explain` takes the verdict from the browser instead of a `checkId`. Mitigations: bounded schema (≤ 12 reasons × 400 chars), the prompt treats the JSON as data, the reply must pass the number guard and the wording filter, and the text is shown only to the person who sent it. `fare_checks.explanation` is currently unused. No rate limit on `/api/explain`: abuse only uses up the free Groq quota, after which the template is served.
@@ -351,4 +351,4 @@ on conflict (id) do nothing;
 ---
 
 ## Next up
-Finish phase 6 by testing with a Groq key, then phase 7: reports. Decisions D2 to D8 are treated as accepted unless changed.
+Phase 7: reports. Decisions D2 to D8 are treated as accepted unless changed.

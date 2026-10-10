@@ -73,9 +73,10 @@ export const EXPLANATION = {
   timeoutMs: 6000,
   /** Used when LLM_BASE_URL / LLM_MODEL are not set */
   defaultBaseUrl: "https://api.groq.com/openai/v1",
-  defaultModel: "llama-3.3-70b-versatile",
+  defaultModel: "qwen/qwen3.8-27b",
   temperature: 0.2,
-  maxTokens: 300,
+  /** Reasoning models spend part of this on hidden reasoning; replies are length-checked anyway. */
+  maxTokens: 800,
   maxTextChars: 600,
   maxTipChars: 300,
   /** The browser waits a little longer than the server timeout before using the template it already has. */
