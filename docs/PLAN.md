@@ -250,11 +250,12 @@ Not fixed (by design or third party): API JSON isn't gzipped by `next start` loc
 - [x] RLS tooling: `supabase/checks/verify-security.sql` (RLS flag, policy count and anon/authenticated grants per table, bucket privacy) and `npm run rls:check` (public-key read/write/storage attempts must all fail). Earlier evidence: the migration was verified in PGlite (RLS on all 6 tables; anon denied; service_role allowed).
 - [ ] User runs `verify-security.sql` in Supabase (and optionally `npm run rls:check`) and confirms the result
 - [x] `docs/DEPLOY.md`: GitHub → Vercel Hobby walkthrough, environment variables with which are secret (never `NEXT_PUBLIC_`), post-deploy checks, real-phone checklist (mobile data, Slow 4G, offline)
-- [ ] User deploys to Vercel; live URL added to README and here
+- [x] Deployed to Vercel: **https://travel-trap-detector.vercel.app** (region bom1). Live checks: four demos give Fair / Suspicious / High risk / Suspicious; road distances from ORS; AI explanations from Groq; `/serwist/sw.js` served as a prerendered file; Lighthouse mobile performance 90–97, accessibility 100 on every page
+- [x] README rewritten for GitHub visitors: live link, phone screenshots (`docs/screenshots/`), contents, feature tour, 2-minute demo, no internal build notes
 - [ ] Phone checklist run on the live URL
 - [x] Commit `phase 12: deploy readiness and security checks`
 
-Live URL: _pending first deploy_
+Live URL: https://travel-trap-detector.vercel.app
 
 ---
 
@@ -392,4 +393,4 @@ on conflict (id) do nothing;
 ---
 
 ## Next up
-Deploy to Vercel (docs/DEPLOY.md), then add the live URL. Decisions D2 to D8 are treated as accepted unless changed.
+Run the phone checklist (docs/DEPLOY.md §5) and the RLS SQL check. Decisions D2 to D8 are treated as accepted unless changed.

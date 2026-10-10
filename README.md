@@ -1,70 +1,105 @@
-# Travel Trap Detector
+<div align="center">
 
-A mobile-first web app that tells travellers in North East India whether a quoted price for an **auto, taxi, bike taxi, shared Sumo seat or local guide** looks fair, and **explains why**.
+# 🛡️ Travel Trap Detector
 
-**Live demo:** _URL added after the first Vercel deploy_ · Deploy guide and phone test checklist: [docs/DEPLOY.md](docs/DEPLOY.md)
+**Is this taxi fare fair? Find out in seconds, and see exactly why.**
 
-Built for CodeWar 8.0, Problem 5 (PS_OPPORTUNITIES). The two requirements from the problem statement:
+A mobile-first web app for travellers in North East India. Enter your auto, taxi, bike taxi, shared Sumo or guide quote and get a clear verdict, a fair price range and a plain-language explanation, backed by fare data and reports from other travellers.
 
-1. **Risk comes from pricing data plus community intelligence.** Each verdict compares the quote with an area rate card, blends in what other travellers actually paid, and is raised one level where several different travellers have reported scams nearby.
-2. **Every verdict explains its reasoning.** There is no bare score. The card lists factual reasons built in code, plus a plain-language explanation that an AI may only reword (every number it writes is checked).
+### [▶ Try it live: travel-trap-detector.vercel.app](https://travel-trap-detector.vercel.app)
 
-> **Data honesty:** all rate cards in this prototype are **placeholders** marked "Demo estimate" in the UI, and the 100 seed reports are synthetic (`is_seed = true`). See [Data honesty](#data-honesty).
+Works on any phone browser · Installable · Works offline · Free to run
 
-## What it does
+</div>
 
-| Screen | What you can do |
+---
+
+<table>
+  <tr>
+    <td align="center"><img src="docs/screenshots/demo.jpg" width="200" alt="Check a fare screen with the Try a demo menu open"><br><sub><b>Check a fare</b><br>or try a demo</sub></td>
+    <td align="center"><img src="docs/screenshots/verdict.jpg" width="200" alt="High risk verdict card with fair price range and reasons"><br><sub><b>Verdict + reasons</b><br>never a bare score</sub></td>
+    <td align="center"><img src="docs/screenshots/driver-card.jpg" width="200" alt="Show the driver card in Assamese with the fair price in large type"><br><sub><b>Show the driver</b><br>EN · অসমীয়া · বাংলা · हिन्दी</sub></td>
+    <td align="center"><img src="docs/screenshots/hotspot-map.jpg" width="200" alt="Scam hotspot map of Guwahati with a hotspot circle"><br><sub><b>Scam hotspots</b><br>from traveller reports</sub></td>
+  </tr>
+</table>
+
+## Contents
+
+- [Why it exists](#why-it-exists)
+- [Features](#features)
+- [Try it in 2 minutes](#try-it-in-2-minutes)
+- [How a fare is checked](#how-a-fare-is-checked)
+- [Data honesty](#data-honesty)
+- [Privacy and security](#privacy-and-security)
+- [Architecture](#architecture)
+- [Run it yourself](#run-it-yourself)
+- [Quality](#quality)
+- [Known limitations](#known-limitations)
+- [Credits](#credits)
+
+## Why it exists
+
+Tourists in Guwahati, Shillong, Kaziranga, Gangtok and Tawang often have no idea what a ride or a guide should cost, and "tourist pricing" is common. Travel Trap Detector gives them a quick, honest second opinion. Two principles run through it:
+
+1. **Risk comes from pricing data *and* community intelligence.** The quote is compared with an area rate card, blended with what other travellers actually paid, and flagged when several different travellers have reported problems at the same pickup.
+2. **Every verdict explains itself.** You always see the expected fare, the fair range and the reasons, never just a score.
+
+Built for **CodeWar 8.0, Problem 5**.
+
+## Features
+
+| | |
 |---|---|
-| **Check** (`/`) | Pick the ride type, pickup and drop (popular places, search or tap the map), time and quoted price. Get **Fair / Suspicious / High risk** with the fair price range, reasons, an explanation, and confidence, source and distance badges. **Try a demo** fills in four preset trips. |
-| **Show the driver** | Full-screen, high-contrast card with the fair range and a polite line in English, Assamese, Bengali or Hindi. Keeps the screen awake. |
-| **Report** (`/report`) | Report what you paid or flag a scam (tag chips, short description, optional photo). Phone and vehicle numbers are removed automatically; photos stay private. "Me too" on nearby reports. |
-| **Map** (`/map`) | Scam hotspots (3+ different travellers within 500 m in 90 days) with a service filter, plus an accessible list of the same hotspots. |
-| **About** (`/about`) | How scoring works, with every threshold read live from `lib/config.ts`. |
-| **Offline** | Installable PWA. With no connection, fare checks give a labelled offline estimate and reports are queued until you're back online. |
+| ✅ **Instant verdict** | **Fair / Suspicious / High risk**, the fair price range in large type, confidence, data-source and distance badges. Colour is always paired with an icon and words. |
+| 🧭 **Easy trip entry** | Popular places for each area, place search, or tap on a map. Road distance is worked out automatically. |
+| 💬 **Plain-language explanation** | A free AI model rewrites the reasons in friendly English plus a polite negotiation tip. Every number it writes is checked against the verdict; if anything is off, a fixed template is used instead. |
+| 🪪 **Show the driver** | A full-screen, high-contrast card with the fair range and a polite line in English, Assamese, Bengali or Hindi. Keeps the screen awake. |
+| 📝 **Community reports** | Report what you paid or flag a problem (tags, short note, optional photo). Phone and vehicle numbers are removed automatically; photos stay private. "Me too" on nearby reports. |
+| 🗺️ **Scam hotspot map** | Places where 3+ different travellers reported problems in the last 90 days, with a service filter and an accessible list. |
+| 📴 **Works offline** | Installable app. With no signal, a fare check still gives a clearly labelled offline estimate, and reports are saved and sent later. |
+| ℹ️ **Transparent rules** | The About page shows the formula and every threshold, read live from the code. |
 
-## Quick start
+## Try it in 2 minutes
 
-Requirements: **Node 24** and free accounts (no card needed) for Supabase, plus optionally OpenRouteService and Groq.
+Open **[travel-trap-detector.vercel.app](https://travel-trap-detector.vercel.app)** on your phone, then:
 
-```bash
-npm install
-cp .env.example .env.local      # then fill in the values below
-```
+1. Tap **Try a demo → High-risk ride from the station → Check this fare.**
+   You get **High risk**: ₹400 is 2.5× the expected ₹163, *and* "9 scam reports from 4 different travellers within 500 m of this pickup".
+2. Tap **Show the driver** and switch between অসমীয়া, বাংলা and हिन्दी.
+3. **Try a demo → Suspicious airport taxi**: blended with 11 traveller reports, so confidence is High.
+4. Open **Map**: the same two Guwahati hotspots, with the same counts as the verdict.
+5. Open **About**: the exact formula and thresholds.
+6. Turn on airplane mode and check another fare: "Offline estimate, community data not included".
 
-1. **Database:** create a free Supabase project. In **SQL Editor**, run `supabase/migrations/001_init.sql`, then `supabase/seed.sql`. Recommended project settings: Data API on, "automatically expose new tables" **off**, automatic RLS on.
-2. **Check it:** `npm run db:check` should end with "All checks passed".
-3. **Run:** `npm run dev` and open http://localhost:3000.
-4. **Production / offline testing:** the service worker only runs in production builds:
-   ```bash
-   npm run build && npm start
-   ```
+The four demo scenarios are built to give the same verdict every time: Fair, Suspicious, High risk, and a Kaziranga guide quote (Suspicious).
 
-5. **Deploy:** see [docs/DEPLOY.md](docs/DEPLOY.md) (GitHub → Vercel Hobby, region Mumbai, environment variables, security checks, phone checklist).
+## How a fare is checked
 
-### Environment variables
+1. **Distance.** Road distance from OpenRouteService. If that isn't available, straight line × 1.3, labelled "estimate".
+2. **Rate card.** `expected = max(minimum fare, base fare + per-km rate × km)`, × the night multiplier between 22:00 and 05:00 IST. Guides have half-day and full-day rates.
+3. **What travellers paid.** With at least 5 similar reports (same area and ride type, distance within ±20 %, last 180 days, not scams), each scaled to your distance:
+   `expected = (1 − w) × rate card + w × median paid`, with `w = min(0.5, reports ÷ 20)`.
+4. **Verdict.** `quote ÷ expected`: up to **1.20** Fair · up to **1.60** Suspicious · above that **High risk**.
+5. **Community warning.** At least 3 scam reports from at least 3 different travellers within 500 m of the pickup in 90 days raise the verdict one level (never above High risk), and the card says why.
+6. **Fair range.** expected × 0.90 to × 1.15, rounded to ₹10.
+7. **Confidence.** High: local rate card + 5 or more reports. Medium: local rate card only. Low: outside the listed areas.
 
-All are server-only (never prefixed `NEXT_PUBLIC_`). Real values go in `.env.local`, which is gitignored.
+All thresholds live in [`lib/config.ts`](lib/config.ts); the scoring engine is a pure, unit-tested function in [`lib/scoring.ts`](lib/scoring.ts).
 
-| Variable | Required | Purpose |
-|---|---|---|
-| `SUPABASE_URL` | yes | Project URL, e.g. `https://<ref>.supabase.co` |
-| `SUPABASE_SECRET_KEY` | yes | Secret (service role) key. Server only. |
-| `ORS_API_KEY` | no | OpenRouteService road distances. Without it: straight line × 1.3, labelled "estimate". |
-| `LLM_BASE_URL` | no | Any OpenAI-compatible endpoint. Default Groq: `https://api.groq.com/openai/v1` |
-| `LLM_API_KEY` | no | Free Groq key. Without it: template explanations. |
-| `LLM_MODEL` | no | Default `qwen/qwen3.8-27b` (check Groq's current model list) |
-| `LLM_REASONING_EFFORT` | no | `none` for Qwen 3, `low` for gpt-oss models |
+## Data honesty
 
-### Scripts
+- **Rate cards are placeholders.** Every rate in this prototype is a plausible demo value, shown with a **"Demo estimate"** badge on every verdict. Replacing them with official fare charts means editing one table in [`supabase/seed.sql`](supabase/seed.sql); the badge then reads "Official fare chart".
+- **Seed reports are synthetic.** The 100 starter reports (`is_seed = true`) exist to demonstrate the community features, including the two Guwahati hotspots.
+- **Places** come from OpenStreetMap. A few points are approximate (which Guwahati airport terminal handles arrivals, Pakyong airport, the centre of Police Bazar).
+- **Translations** on the driver card are first drafts awaiting review by native speakers.
 
-| Command | What it does |
-|---|---|
-| `npm run dev` | Dev server (no service worker) |
-| `npm run build` / `npm start` | Production build and server (with service worker) |
-| `npm run check` | Lint + typecheck + all tests |
-| `npm run db:check` | Row counts, seed sanity, private bucket, hotspot check |
-| `npm run rls:check` | Tries to read and write everything with the **public** key; all must be blocked (needs `SUPABASE_PUBLISHABLE_KEY` in `.env.local`) |
-| `npm run icons` | Re-render the PWA icons from `public/icons/icon.svg` |
+## Privacy and security
+
+- **No accounts, no personal data.** A random device ID kept on the phone is used only for rate limits (30 checks and 5 reports per hour) and "Me too" votes.
+- **Places and patterns, never people.** Phone numbers and vehicle registration numbers are removed from report text on the server.
+- **Private photos.** Evidence photos are shrunk on the phone (which also strips location metadata), stored in a private bucket, and never shown to anyone, only "evidence attached".
+- **Locked-down database.** The browser never talks to the database: every read and write goes through the app's server with a secret key. Row-level security is on for every table with no public policies.
+- **Checked:** the deployed browser bundle and the git history were scanned for every key name and value: no secrets. Verify the database yourself with [`supabase/checks/verify-security.sql`](supabase/checks/verify-security.sql) or `npm run rls:check`.
 
 ## Architecture
 
@@ -78,7 +113,7 @@ flowchart LR
     UI -. offline .-> OFF["Offline check<br/>(same scoring engine)"]
   end
 
-  subgraph Server["Next.js route handlers (Vercel)"]
+  subgraph Server["Next.js route handlers (Vercel, Mumbai)"]
     CHECK["POST /api/check"]
     EXPLAIN["POST /api/explain"]
     REPORTS["/api/reports · /nearby · /vote · /upload-url"]
@@ -104,77 +139,66 @@ flowchart LR
   UI --> OSM["OpenStreetMap tiles"]
 ```
 
-- **The browser never talks to the database.** Every read and write goes through route handlers using the secret key. RLS is on for every table with no public policies, so the public keys can do nothing. The one exception is evidence photos: the browser uploads one file to a single-use signed URL, and nothing in that bucket can be read back.
-- **Business logic lives in `lib/`** as pure functions with unit tests; route handlers stay thin. The scoring engine (`lib/scoring.ts`) runs unchanged on the server and, for offline estimates, in the browser.
-- **Every external service has a free fallback:** ORS → straight line × 1.3; Groq → template; Nominatim → the seeded place list; network → offline estimate and report queue.
+**Stack:** Next.js 16 (App Router, TypeScript, Tailwind CSS 4) · Supabase Postgres + Storage · Leaflet + OpenStreetMap · OpenRouteService · Groq · Serwist (PWA) · zod · Vitest · Vercel.
+
+Every external service is a free tier, and each has a fallback: no road distance → straight-line estimate; no AI → template explanation; no place search → popular places list; no connection → offline estimate and report queue.
 
 ```
-app/            pages, route handlers (app/api), service worker (app/sw.ts), manifest
-components/     UI: fare check, verdict card, place picker, report, map, driver card
-lib/            scoring, explain, number guard, hotspots, redact, geo, distance, config
-lib/server/     database access (server-only)    lib/client/  browser helpers
-supabase/       001_init.sql (schema, RLS, bucket) · seed.sql (areas, places, rates, reports)
-tests/          Vitest unit tests            docs/PLAN.md  build log and decisions
+app/            pages, API route handlers, service worker, web manifest
+components/     fare check, verdict card, place picker, reports, map, driver card
+lib/            scoring, explanations + number guard, hotspots, redaction, geo, config
+supabase/       schema + row-level security (migrations), seed data, security check
+tests/          unit tests
+docs/           deployment guide and phone test checklist, screenshots
 ```
 
-## How scoring works
+## Run it yourself
 
-Full plain-language version with live numbers: **`/about`**. In short (all thresholds live in `lib/config.ts`):
+Requirements: **Node 24** and free accounts (no card) for Supabase, plus optionally OpenRouteService and Groq.
 
-1. **Distance:** OpenRouteService road distance; otherwise straight line × 1.3 (labelled estimate).
-2. **Rate card:** `expected = max(min_fare, base_fare + per_km_rate × km)`, × the night multiplier between 22:00 and 05:00 IST. Guides use a half-day or full-day rate.
-3. **Community blend:** with ≥ 5 similar non-scam reports (same area and service, distance ±20 %, last 180 days), each scaled to this distance: `expected = (1 − w) × rate card + w × median`, `w = min(0.5, n / 20)`.
-4. **Verdict:** `ratio = quote ÷ expected`. ≤ 1.20 Fair, ≤ 1.60 Suspicious, above that High risk.
-5. **Community escalation:** ≥ 3 scam reports from ≥ 3 different devices within 500 m of the pickup in 90 days raises the verdict one level (never above High risk), with a reason saying why.
-6. **Fair range:** expected × 0.90 to × 1.15, rounded to ₹10.
-7. **Confidence:** High = area rate card + ≥ 5 reports; Medium = area rate card; Low = regional default.
+```bash
+npm install
+cp .env.example .env.local      # fill in the values below
+```
 
-**Explanation:** a free LLM (Groq) gets the verdict JSON and must write 2–3 sentences plus one polite tip. Every number in its reply is extracted and checked against the verdict, allowing for rounding; accusing or legal wording is rejected; there is a 6-second limit. Any failure shows the deterministic template instead.
+1. **Database:** create a free Supabase project. In **SQL Editor**, run [`supabase/migrations/001_init.sql`](supabase/migrations/001_init.sql), then [`supabase/seed.sql`](supabase/seed.sql).
+2. **Check it:** `npm run db:check` should end with "All checks passed".
+3. **Run:** `npm run dev`, then open http://localhost:3000.
+4. **Deploy:** follow [docs/DEPLOY.md](docs/DEPLOY.md) (GitHub → Vercel, environment variables, security checks, phone test checklist).
 
-## Data honesty
+| Variable | Required | Purpose |
+|---|---|---|
+| `SUPABASE_URL` | yes | Project URL, e.g. `https://<ref>.supabase.co` |
+| `SUPABASE_SECRET_KEY` | yes | Secret (service role) key. **Server only; never `NEXT_PUBLIC_`.** |
+| `ORS_API_KEY` | no | OpenRouteService road distances. Without it: straight line × 1.3. |
+| `LLM_BASE_URL` | no | Any OpenAI-compatible endpoint (default Groq) |
+| `LLM_API_KEY` | no | Groq key. Without it: template explanations. |
+| `LLM_MODEL` | no | Default `qwen/qwen3.8-27b` |
+| `LLM_REASONING_EFFORT` | no | `none` for Qwen 3, `low` for gpt-oss |
 
-- **Rate cards are placeholders** (`source = 'demo_estimate'`, note "Replace with official fare chart"). The UI shows a "Demo estimate" badge on every verdict and the driver card says "demo estimate". To use real fares, edit the table at the top of `supabase/seed.sql` and set `source = 'official'` with the notification as `source_note`.
-- **Seed reports are synthetic** (`is_seed = true`, device IDs start with `5eed0000-`): 70 normal fares and 30 scams with hotspots at Guwahati Railway Station and the airport. They exist to demonstrate the community features.
-- **Place coordinates** come from OpenStreetMap (element IDs in `seed.sql`). Not fully verified: which Guwahati airport terminal handles arrivals, Pakyong's terminal (unmapped), and Police Bazar (street centre).
-- **Translations** on the driver card are first drafts marked "needs native speaker review" in `lib/i18n/driver-card.json`.
-
-## Security checks
-
-- **No secret reaches the browser:** the client bundle, prerendered pages, service worker and `public/` were scanned for every key name, every key value and the `sb_secret_` / `gsk_` prefixes. All clean. Git history contains no secret values.
-- **Database lock-down:** RLS on every table, no policies, no grants for `anon`/`authenticated`. Verify with `supabase/checks/verify-security.sql` (SQL Editor) and `npm run rls:check`.
-
-## Privacy and safety
-
-- No accounts and no personal data. A random device ID (localStorage) is used only for rate limits (30 checks and 5 reports per hour) and "Me too" votes.
-- We flag places and patterns, never people: phone numbers and vehicle registration numbers are stripped from report text on the server, and the UI asks people not to include names.
-- Evidence photos are compressed on the phone (which also strips EXIF/GPS), stored in a private bucket, and never displayed; the UI only says "evidence attached".
-- Map location (if allowed) stays in the browser.
-
-## Known limitations
-
-- **Placeholder rate cards:** verdicts are a guide until official fare charts are added.
-- **Spoofable device ID:** anyone can clear or forge it, so one person could pose as several travellers. Rate limits and the 3-traveller rule reduce, but don't remove, this risk.
-- **Small community sample:** real reports are few, so most checks use the rate card alone.
-- **Hill roads:** when road distance is unavailable, straight line × 1.3 can be about half the real distance in Gangtok and Tawang.
-- **Route-based fares:** shared taxis often charge a fixed fare per seat per route, which the per-km model only approximates.
-- **Free-tier limits:** Groq's per-minute limit falls back to the template; Nominatim's 1 request/second and some rate limits are per server instance.
-- **Offline estimates** have no community data or warnings.
+| Command | What it does |
+|---|---|
+| `npm run dev` | Development server |
+| `npm run build` / `npm start` | Production build and server (includes the offline service worker) |
+| `npm run check` | Lint + typecheck + all unit tests |
+| `npm run db:check` | Database row counts, seed sanity, private bucket, hotspot check |
+| `npm run rls:check` | Tries to read and write everything with the *public* key; all must be blocked |
 
 ## Quality
 
-- **Tests:** Vitest unit tests for scoring, time windows, distance, number guard, explanations, redaction, hotspots, offline check, report queue, demo scenarios and more (`npm test`).
-- **Lighthouse (mobile, production build):** accessibility 100 on every page; performance 92–99, except `/map` at about 88 because its largest element is a third-party map tile.
-- **Accessibility:** every control has a label, visible focus rings, WCAG AA contrast, and verdicts always pair colour with an icon and text.
+- **255 unit tests** (Vitest) covering scoring rules and boundaries, time windows, distances, the AI number guard, explanations, redaction, hotspots, the offline check, the report queue and the demo scenarios.
+- **Lighthouse (mobile, live site):** accessibility **100** on every page; performance **90–97**; best practices **100** (96 on the map, because of the map tiles); SEO **100**.
+- **Accessibility:** every control is labelled, keyboard focus is visible, colour contrast meets WCAG AA, and verdicts are never shown by colour alone.
 
-## Demo script (2 minutes)
+## Known limitations
 
-1. **Check → Try a demo → "High-risk ride from the station" → Check this fare.** High risk, ₹400 against about ₹163, plus "9 scam reports from 4 different travellers within 500 m" (pricing data + community intelligence, explained).
-2. **Show the driver** → switch to অসমীয়া / বাংলা / हिन्दी.
-3. **Try a demo → "Suspicious airport taxi"** → Suspicious, blended with 11 traveller reports (High confidence).
-4. **Map** → the two hotspots, with the same counts as the verdict card.
-5. **About** → the formula and thresholds, live from config.
-6. Optional: DevTools → Network → **Offline**, run a check → "Offline estimate, community data not included".
+- **Placeholder rate cards.** Verdicts are a guide until official fare charts are added.
+- **Device IDs can be faked.** One person could pose as several travellers. Rate limits and the 3-traveller rule reduce, but don't remove, this risk.
+- **Small community sample.** Real reports are few so far, so most checks lean on the rate card.
+- **Hill roads.** If road distance is unavailable, the straight-line estimate can be about half the real distance around Gangtok and Tawang.
+- **Route-based fares.** Many shared taxis charge a fixed fare per seat per route, which the per-km model only approximates.
+- **Offline estimates** don't include traveller reports or warnings.
 
 ## Credits
 
-Map data and place search © OpenStreetMap contributors (ODbL). Road distances by OpenRouteService. Fonts: Noto Sans family (SIL OFL). Built with Next.js, Supabase, Leaflet, Serwist and zod.
+Map data and place search © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors (ODbL) · Road distances by [OpenRouteService](https://openrouteservice.org) · Fonts: Noto Sans family (SIL OFL) · Built with Next.js, Supabase, Leaflet, Serwist and zod.
