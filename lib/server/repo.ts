@@ -53,6 +53,7 @@ export function toBenchmark(row: FareBenchmarkRow): FareBenchmark {
     sessionRates: row.session_rates,
     source: row.source,
     sourceNote: row.source_note,
+    sourceUrl: row.source_url ?? null,
   };
 }
 
@@ -73,6 +74,7 @@ export function toFixedFare(row: FixedFareRow): FixedFare {
     listedKm: num(row.listed_km),
     source: row.source,
     sourceNote: row.source_note,
+    sourceUrl: row.source_url,
   };
 }
 

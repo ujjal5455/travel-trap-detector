@@ -4,7 +4,7 @@ import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { useState, type Ref } from "react";
 import { ExplanationBlock } from "@/components/ExplanationBlock";
-import { formatINR, formatKm, formatRatio } from "@/lib/format";
+import { formatINR, formatKm, formatRatio, sourceLink } from "@/lib/format";
 import { CONFIDENCE_LABELS, SOURCE_LABELS, VERDICT_LABELS } from "@/lib/labels";
 import { saveReportDraft } from "@/lib/client/report-draft";
 import { OFFLINE_LABEL } from "@/lib/offline-check";
@@ -72,6 +72,7 @@ export function VerdictCard({
   const { verdict: v, explanation, quotedPrice, area } = result;
   const style = STYLES[v.verdict];
   const label = VERDICT_LABELS[v.verdict];
+  const officialLink = v.benchmarkSource === "official" ? sourceLink(v.sourceUrl) : null;
 
   return (
     <article className={`overflow-hidden rounded-2xl border-2 ${style.border} bg-surface`} aria-labelledby="verdict-title">
@@ -120,6 +121,22 @@ export function VerdictCard({
           )}
           <Badge>{area ? area.name : "Regional rate"}</Badge>
         </div>
+
+        {officialLink && (
+          <p className="text-sm">
+            For more details, check the official fare list on{" "}
+            <a
+              href={officialLink.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex min-h-11 items-center font-semibold underline underline-offset-2"
+            >
+              {officialLink.host}
+              <span aria-hidden="true">&nbsp;↗</span>
+              <span className="sr-only"> (opens in a new tab)</span>
+            </a>
+          </p>
+        )}
 
         <section aria-labelledby="why-title">
           <h3 id="why-title" className="text-sm font-semibold">

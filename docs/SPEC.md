@@ -43,7 +43,7 @@ places           id, area_id, name, kind (railway|airport|bus_stand|temple|marke
 fare_benchmarks  id, area_id (null = regional default), service_type, pricing_unit (per_km|per_session),
                  base_fare, per_km_rate, min_fare, night_multiplier, night_start (default 22), night_end (default 5),
                  session_rates jsonb  -- {"half_day": n, "full_day": n} for guides
-                 source (official|app_comparison|demo_estimate), source_note, updated_at
+                 source (official|app_comparison|demo_estimate), source_note, source_url (https, optional), updated_at
 reports          id, device_id, area_id, service_type, pickup_lat, pickup_lng, drop_lat, drop_lng, distance_km,
                  session_type, quoted_price, paid_price, felt_fair bool, is_scam bool, scam_tags text[],
                  description, photo_path, is_seed bool, created_at
@@ -51,7 +51,7 @@ report_votes     report_id, device_id, created_at   -- primary key (report_id, d
 fare_checks      id, device_id, area_id, service_type, distance_km, quoted_price, verdict, ratio, created_at
 fixed_fares      id, area_id, service_type, origin_name, origin_lat, origin_lng, origin_radius_m,
                  dest_name, dest_lat, dest_lng, dest_radius_m, fare, listed_km,
-                 source, source_note, updated_at   -- official route fares, e.g. the AAI airport prepaid taxi list
+                 source, source_note, source_url, updated_at   -- official route fares, e.g. the AAI airport prepaid taxi list
 ```
 
 - `service_type`: auto | taxi | bike_taxi | shared_sumo | guide. Guides use per_session pricing (half_day or full_day) and have no drop point.
@@ -72,7 +72,8 @@ Implemented in `lib/scoring.ts` as a pure function with full unit tests. All thr
 4. **Community escalation.** If there are at least 3 `is_scam` reports within 500 m of the pickup in the last 90 days, from at least 3 distinct device_ids, raise the verdict one level (FAIR → SUSPICIOUS, SUSPICIOUS → HIGH_RISK, never beyond HIGH_RISK) and add a reason saying why.
 5. **Fair range** = [expected × 0.90, expected × 1.15], each rounded to the nearest ₹10.
 6. **Confidence.** HIGH = area-specific benchmark and at least 5 community samples. MEDIUM = area-specific benchmark only. LOW = regional default. (Data source is shown separately as a badge.)
-7. **Output** (`FareVerdict` type): verdict, ratio, expectedFare, fairRange, distanceKm, distanceMethod, benchmarkSource, communitySampleSize, nearbyScam { count, distinctDevices, topTags }, confidence, reasons: string[], fixedFare { origin, destination, fare, listedKm, sourceNote } | null.
+7. **Output** (`FareVerdict` type): verdict, ratio, expectedFare, fairRange, distanceKm, distanceMethod, benchmarkSource, communitySampleSize, nearbyScam { count, distinctDevices, topTags }, confidence, reasons: string[], fixedFare { origin, destination, fare, listedKm, sourceNote } | null, sourceUrl | null.
+   When the source is official and has a `source_url`, the verdict card links to it ("For more details, check the official fare list on aai.aero").
    `reasons` are short factual sentences built in code, for example: "Quoted ₹600 is 2.1× the expected ₹285 for a 6.2 km auto ride."
 
 ## AI explanation rules (`lib/explain.ts`)

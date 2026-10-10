@@ -136,6 +136,7 @@ export const fareVerdictSchema = z.object({
     })
     .nullable()
     .optional(),
+  sourceUrl: z.url({ protocol: /^https$/ }).max(500).nullable().optional(),
 });
 
 export const explainRequestSchema = z.object({ verdict: fareVerdictSchema });

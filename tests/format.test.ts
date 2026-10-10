@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatINR, formatKm, formatMeters, formatRatio, formatTimeAgo, roundToNearest } from "@/lib/format";
+import { formatINR, formatKm, formatMeters, formatRatio, formatTimeAgo, roundToNearest, sourceLink } from "@/lib/format";
 
 describe("formatINR", () => {
   it("formats whole rupees with the rupee sign", () => {
@@ -48,5 +48,20 @@ describe("formatRatio / formatKm", () => {
   it("uses one decimal place", () => {
     expect(formatRatio(2.08)).toBe("2.1×");
     expect(formatKm(6.24)).toBe("6.2 km");
+  });
+});
+
+describe("sourceLink", () => {
+  it("gives the link and a short host name for https sources", () => {
+    expect(sourceLink("https://www.aai.aero/en/airports/transport-details/guwahati/Taxi")).toEqual({
+      href: "https://www.aai.aero/en/airports/transport-details/guwahati/Taxi",
+      host: "aai.aero",
+    });
+  });
+
+  it("rejects anything that isn't an https URL", () => {
+    for (const bad of [null, undefined, "", "not a url", "http://aai.aero", "javascript:alert(1)", "data:text/html,hi"]) {
+      expect(sourceLink(bad)).toBeNull();
+    }
   });
 });

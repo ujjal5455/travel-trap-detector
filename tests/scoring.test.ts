@@ -420,6 +420,7 @@ describe("official fixed fares", () => {
     listedKm: 25,
     source: "official" as const,
     sourceNote: "AAI prepaid taxi list (DTO notification, 20 Nov 2019)",
+    sourceUrl: "https://www.aai.aero/en/airports/transport-details/guwahati/Taxi",
   };
 
   it("replaces the rate card, with no minimum fare or night rate", () => {
@@ -441,6 +442,9 @@ describe("official fixed fares", () => {
       listedKm: 25,
       sourceNote: "AAI prepaid taxi list (DTO notification, 20 Nov 2019)",
     });
+    expect(v.sourceUrl).toBe("https://www.aai.aero/en/airports/transport-details/guwahati/Taxi");
+    // Without a fixed fare the link comes from the rate card, which has none here.
+    expect(scoreFare(input({ quotedPrice: 580 })).sourceUrl).toBeNull();
   });
 
   it("counts as local data for confidence, even with the regional default benchmark", () => {

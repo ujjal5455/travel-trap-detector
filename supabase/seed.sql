@@ -136,7 +136,7 @@ on conflict (area_id, name) do update set
 -- -----------------------------------------------------------------------------
 insert into public.fare_benchmarks (
   area_id, service_type, pricing_unit, base_fare, per_km_rate, min_fare, night_multiplier,
-  session_rates, source, source_note, updated_at
+  session_rates, source, source_note, source_url, updated_at
 )
 select
   v.area_id,
@@ -146,40 +146,41 @@ select
   case when v.service_type = 'guide' then jsonb_build_object('half_day', v.half_day, 'full_day', v.full_day) end,
   coalesce(v.source, 'demo_estimate'),
   coalesce(v.source_note, 'Replace with official fare chart'),
+  v.source_url,
   now()
 from (values
-  --  area         service        base   ₹/km   min   night   half   full   source   source_note
-  ('guwahati',  'auto',          40,    18,     50,  1.25,   null,  null, null, null),
-  ('guwahati',  'taxi',          70,    20.34, 190,  1.00,   null,  null,  'official', 'AAI Guwahati airport prepaid taxi fare list (DTO Kamrup Metro notification TMV.195/2010/352-A, 20 Nov 2019): base + per-km fitted to its 73 local destinations (all within ₹78). Airport-counter fares; no night rate listed.'),
-  ('guwahati',  'bike_taxi',     20,    7,      35,  1.20,   null,  null, null, null),
-  ('guwahati',  'shared_sumo',   20,    2.8,    50,  1.00,   null,  null, null, null),
-  ('guwahati',  'guide',         null,  null,  null, 1.00,   800,   1500, null, null),
-  ('shillong',  'auto',          40,    20,     60,  1.25,   null,  null, null, null),
-  ('shillong',  'taxi',          80,    30,    150,  1.25,   null,  null, null, null),
-  ('shillong',  'bike_taxi',     20,    8,      40,  1.20,   null,  null, null, null),
-  ('shillong',  'shared_sumo',   25,    3.0,    60,  1.00,   null,  null, null, null),
-  ('shillong',  'guide',         null,  null,  null, 1.00,   1000,  1800, null, null),
-  ('kaziranga', 'auto',          30,    16,     50,  1.30,   null,  null, null, null),
-  ('kaziranga', 'taxi',          100,   22,    300,  1.30,   null,  null, null, null),
-  ('kaziranga', 'bike_taxi',     20,    8,      40,  1.25,   null,  null, null, null),
-  ('kaziranga', 'shared_sumo',   20,    2.8,    50,  1.00,   null,  null, null, null),
-  ('kaziranga', 'guide',         null,  null,  null, 1.00,   1000,  1800, null, null),
-  ('gangtok',   'auto',          40,    22,     60,  1.25,   null,  null, null, null),
-  ('gangtok',   'taxi',          100,   45,    200,  1.25,   null,  null, null, null),
-  ('gangtok',   'bike_taxi',     25,    10,     50,  1.20,   null,  null, null, null),
-  ('gangtok',   'shared_sumo',   30,    4.0,    80,  1.00,   null,  null, null, null),
-  ('gangtok',   'guide',         null,  null,  null, 1.00,   1200,  2200, null, null),
-  ('tawang',    'auto',          40,    24,     60,  1.30,   null,  null, null, null),
-  ('tawang',    'taxi',          100,   40,    200,  1.30,   null,  null, null, null),
-  ('tawang',    'bike_taxi',     30,    10,     50,  1.25,   null,  null, null, null),
-  ('tawang',    'shared_sumo',   30,    4.0,    80,  1.00,   null,  null, null, null),
-  ('tawang',    'guide',         null,  null,  null, 1.00,   1200,  2000, null, null),
-  (null,        'auto',          40,    18,     50,  1.25,   null,  null, null, null),
-  (null,        'taxi',          100,   25,    200,  1.25,   null,  null, null, null),
-  (null,        'bike_taxi',     20,    8,      40,  1.20,   null,  null, null, null),
-  (null,        'shared_sumo',   25,    3.0,    60,  1.00,   null,  null, null, null),
-  (null,        'guide',         null,  null,  null, 1.00,   1000,  1800, null, null)
-) as v (area_id, service_type, base_fare, per_km_rate, min_fare, night_multiplier, half_day, full_day, source, source_note)
+  --  area         service        base   ₹/km   min   night   half   full   source   source_note   source_url
+  ('guwahati',  'auto',          40,    18,     50,  1.25,   null,  null, null, null, null),
+  ('guwahati',  'taxi',          70,    20.34, 190,  1.00,   null,  null,  'official', 'AAI Guwahati airport prepaid taxi fare list (DTO Kamrup Metro notification TMV.195/2010/352-A, 20 Nov 2019): base + per-km fitted to its 73 local destinations (all within ₹78). Airport-counter fares; no night rate listed.', 'https://www.aai.aero/en/airports/transport-details/guwahati/Taxi'),
+  ('guwahati',  'bike_taxi',     20,    7,      35,  1.20,   null,  null, null, null, null),
+  ('guwahati',  'shared_sumo',   20,    2.8,    50,  1.00,   null,  null, null, null, null),
+  ('guwahati',  'guide',         null,  null,  null, 1.00,   800,   1500, null, null, null),
+  ('shillong',  'auto',          40,    20,     60,  1.25,   null,  null, null, null, null),
+  ('shillong',  'taxi',          80,    30,    150,  1.25,   null,  null, null, null, null),
+  ('shillong',  'bike_taxi',     20,    8,      40,  1.20,   null,  null, null, null, null),
+  ('shillong',  'shared_sumo',   25,    3.0,    60,  1.00,   null,  null, null, null, null),
+  ('shillong',  'guide',         null,  null,  null, 1.00,   1000,  1800, null, null, null),
+  ('kaziranga', 'auto',          30,    16,     50,  1.30,   null,  null, null, null, null),
+  ('kaziranga', 'taxi',          100,   22,    300,  1.30,   null,  null, null, null, null),
+  ('kaziranga', 'bike_taxi',     20,    8,      40,  1.25,   null,  null, null, null, null),
+  ('kaziranga', 'shared_sumo',   20,    2.8,    50,  1.00,   null,  null, null, null, null),
+  ('kaziranga', 'guide',         null,  null,  null, 1.00,   1000,  1800, null, null, null),
+  ('gangtok',   'auto',          40,    22,     60,  1.25,   null,  null, null, null, null),
+  ('gangtok',   'taxi',          100,   45,    200,  1.25,   null,  null, null, null, null),
+  ('gangtok',   'bike_taxi',     25,    10,     50,  1.20,   null,  null, null, null, null),
+  ('gangtok',   'shared_sumo',   30,    4.0,    80,  1.00,   null,  null, null, null, null),
+  ('gangtok',   'guide',         null,  null,  null, 1.00,   1200,  2200, null, null, null),
+  ('tawang',    'auto',          40,    24,     60,  1.30,   null,  null, null, null, null),
+  ('tawang',    'taxi',          100,   40,    200,  1.30,   null,  null, null, null, null),
+  ('tawang',    'bike_taxi',     30,    10,     50,  1.25,   null,  null, null, null, null),
+  ('tawang',    'shared_sumo',   30,    4.0,    80,  1.00,   null,  null, null, null, null),
+  ('tawang',    'guide',         null,  null,  null, 1.00,   1200,  2000, null, null, null),
+  (null,        'auto',          40,    18,     50,  1.25,   null,  null, null, null, null),
+  (null,        'taxi',          100,   25,    200,  1.25,   null,  null, null, null, null),
+  (null,        'bike_taxi',     20,    8,      40,  1.20,   null,  null, null, null, null),
+  (null,        'shared_sumo',   25,    3.0,    60,  1.00,   null,  null, null, null, null),
+  (null,        'guide',         null,  null,  null, 1.00,   1000,  1800, null, null, null)
+) as v (area_id, service_type, base_fare, per_km_rate, min_fare, night_multiplier, half_day, full_day, source, source_note, source_url)
 on conflict on constraint fare_benchmarks_area_service_key do update set
   pricing_unit     = excluded.pricing_unit,
   base_fare        = excluded.base_fare,
@@ -189,6 +190,7 @@ on conflict on constraint fare_benchmarks_area_service_key do update set
   session_rates    = excluded.session_rates,
   source           = excluded.source,
   source_note      = excluded.source_note,
+  source_url       = excluded.source_url,
   updated_at       = now();
 
 -- -----------------------------------------------------------------------------

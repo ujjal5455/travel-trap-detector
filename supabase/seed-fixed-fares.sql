@@ -21,12 +21,13 @@ delete from public.fixed_fares where service_type = 'taxi' and origin_name = 'LG
 
 insert into public.fixed_fares
   (area_id, service_type, origin_name, origin_lat, origin_lng, origin_radius_m,
-   dest_name, dest_lat, dest_lng, dest_radius_m, fare, listed_km, source, source_note)
+   dest_name, dest_lat, dest_lng, dest_radius_m, fare, listed_km, source, source_note, source_url)
 select
   'guwahati', 'taxi', 'LGBI Airport', 26.1054933, 91.5881147, 2500,
   v.dest_name, v.dest_lat, v.dest_lng, v.dest_radius_m, v.fare, v.listed_km,
   'official',
-  'AAI LGBI Airport prepaid taxi fare list (DTO Kamrup Metro notification TMV.195/2010/352-A, 20 Nov 2019)'
+  'AAI LGBI Airport prepaid taxi fare list (DTO Kamrup Metro notification TMV.195/2010/352-A, 20 Nov 2019)',
+  'https://www.aai.aero/en/airports/transport-details/guwahati/Taxi'
 from (values
   --  destination (as listed)                    lat       lng       radius   fare   km
   ('ABC / Christian Basti'                     , 26.15584, 91.77807,  1500,   680,  30),

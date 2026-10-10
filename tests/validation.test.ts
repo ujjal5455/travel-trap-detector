@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { reportRequestSchema } from "@/lib/validation";
+import { fareVerdictSchema, reportRequestSchema } from "@/lib/validation";
 
 const pickup = { lat: 26.18, lng: 91.75 };
 const drop = { lat: 26.16, lng: 91.7 };
@@ -46,5 +46,25 @@ describe("reportRequestSchema", () => {
     const base = { serviceType: "auto", pickup, drop, paidPrice: 100, isScam: false };
     expect(ok({ ...base, photoPath: "../other-bucket/x.jpg" })).toBe(false);
     expect(ok({ ...base, photoPath: "someone-else/../../x.jpg" })).toBe(false);
+  });
+});
+
+describe("fareVerdictSchema sourceUrl", () => {
+  const verdict = {
+    verdict: "FAIR", quotedPrice: 580, ratio: 1, expectedFare: 580, fairRange: { min: 520, max: 670 },
+    distanceKm: 23.4, distanceMethod: "road", benchmarkSource: "official", communitySampleSize: 0,
+    nearbyScam: { count: 0, distinctDevices: 0, topTags: [] }, confidence: "MEDIUM", reasons: [],
+  };
+
+  it("accepts an https link, null or no link", () => {
+    expect(fareVerdictSchema.safeParse({ ...verdict, sourceUrl: "https://www.aai.aero/en/airports/transport-details/guwahati/Taxi" }).success).toBe(true);
+    expect(fareVerdictSchema.safeParse({ ...verdict, sourceUrl: null }).success).toBe(true);
+    expect(fareVerdictSchema.safeParse(verdict).success).toBe(true);
+  });
+
+  it("rejects other schemes", () => {
+    for (const sourceUrl of ["http://aai.aero", "javascript:alert(1)", "not a url"]) {
+      expect(fareVerdictSchema.safeParse({ ...verdict, sourceUrl }).success).toBe(false);
+    }
   });
 });

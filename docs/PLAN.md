@@ -265,6 +265,7 @@ Source: the [AAI Guwahati airport prepaid taxi list](https://www.aai.aero/en/air
 - [x] Verdict card shows "Official prepaid fare" with the source; the template explanation names the fare and suggests the prepaid counter; the AI sees `officialFixedFare` and the number guard covers it.
 - [x] Demo 2 retuned to ₹660 (ISBT → airport): 1.26–1.28× by road, 1.55× estimated → Suspicious.
 - [x] About, README, SPEC updated; `db:check` expects 94 fixed fares; `rls:check` covers the new table.
+- [x] `source_url` (https only, DB check constraint) on `fare_benchmarks` and `fixed_fares`; official verdicts link to it: "For more details, check the official fare list on aai.aero ↗" (new tab, `noopener`). `sourceLink` in `lib/format.ts` rejects non-https links.
 - [ ] User runs `002_fixed_fares.sql`, `seed-fixed-fares.sql` and `seed.sql` again in Supabase, then the live demos are re-verified
 
 ---

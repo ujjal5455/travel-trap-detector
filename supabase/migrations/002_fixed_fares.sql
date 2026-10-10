@@ -25,6 +25,15 @@ create table if not exists public.fixed_fares (
 );
 create index if not exists fixed_fares_service_idx on public.fixed_fares (service_type);
 
+-- Link to the published source, shown as "check the official website" on the verdict card.
+-- Added with "if not exists" so this file can be re-run after an earlier version of it.
+alter table public.fixed_fares add column if not exists source_url text;
+alter table public.fare_benchmarks add column if not exists source_url text;
+alter table public.fixed_fares drop constraint if exists fixed_fares_source_url_https;
+alter table public.fixed_fares add constraint fixed_fares_source_url_https check (source_url ~ '^https://');
+alter table public.fare_benchmarks drop constraint if exists fare_benchmarks_source_url_https;
+alter table public.fare_benchmarks add constraint fare_benchmarks_source_url_https check (source_url ~ '^https://');
+
 alter table public.fixed_fares enable row level security;
 revoke all on public.fixed_fares from anon, authenticated;
 grant select, insert, update, delete on public.fixed_fares to service_role;

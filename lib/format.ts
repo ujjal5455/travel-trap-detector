@@ -38,3 +38,15 @@ export function formatMeters(m: number): string {
 export function formatKm(km: number): string {
   return `${km.toFixed(1)} km`;
 }
+
+/** A safe outbound link to a fare source: https only, with the bare host name for the label. */
+export function sourceLink(url: string | null | undefined): { href: string; host: string } | null {
+  if (!url) return null;
+  try {
+    const u = new URL(url);
+    if (u.protocol !== "https:") return null;
+    return { href: u.href, host: u.hostname.replace(/^www\./, "") };
+  } catch {
+    return null;
+  }
+}

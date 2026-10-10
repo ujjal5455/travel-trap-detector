@@ -73,6 +73,8 @@ export interface FareBenchmark {
   sessionRates: Record<SessionType, number> | null;
   source: BenchmarkSource;
   sourceNote: string | null;
+  /** Link to the published source (https only); absent in older offline packs */
+  sourceUrl?: string | null;
 }
 
 /** An official fixed fare for one route, e.g. the airport prepaid taxi to Paltan Bazaar. */
@@ -95,6 +97,7 @@ export interface FixedFare {
   listedKm: number | null;
   source: BenchmarkSource;
   sourceNote: string | null;
+  sourceUrl?: string | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -133,6 +136,8 @@ export interface FareBenchmarkRow {
   session_rates: Record<SessionType, number> | null;
   source: BenchmarkSource;
   source_note: string | null;
+  /** Added by migration 002; missing before it runs */
+  source_url?: string | null;
   updated_at: string;
 }
 
@@ -152,6 +157,7 @@ export interface FixedFareRow {
   listed_km: number | null;
   source: BenchmarkSource;
   source_note: string | null;
+  source_url: string | null;
   updated_at: string;
 }
 
@@ -357,4 +363,6 @@ export interface FareVerdict {
     listedKm: number | null;
     sourceNote: string | null;
   } | null;
+  /** Link to the published source of the rate or fixed fare used, if there is one */
+  sourceUrl?: string | null;
 }

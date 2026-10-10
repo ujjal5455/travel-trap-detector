@@ -340,5 +340,6 @@ export function scoreFare(input: ScoreInput): FareVerdict {
     fixedFare: fixed
       ? { origin: fixed.originName, destination: fixed.destName, fare: fixed.fare, listedKm: fixed.listedKm, sourceNote: fixed.sourceNote }
       : null,
+    sourceUrl: (fixed ? fixed.sourceUrl : b.sourceUrl) ?? null,
   };
 }
