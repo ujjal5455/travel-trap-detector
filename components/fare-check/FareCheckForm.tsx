@@ -8,6 +8,9 @@ import { isNetworkError, isOffline, reportNetworkOk, reportNetworkProblem } from
 import { loadOfflinePack } from "@/lib/client/offline-store";
 import { offlineCheck } from "@/lib/offline-check";
 import type { CheckResponse, PlaceChoice, ReportDraft, ServiceType, SessionType } from "@/lib/types";
+import type { DemoScenario } from "@/lib/demo-scenarios";
+import { noonInIndiaToday } from "@/lib/time";
+import { DemoPicker } from "./DemoPicker";
 import { ServicePicker } from "./ServicePicker";
 
 type Status =
@@ -52,6 +55,7 @@ export function FareCheckForm() {
   const [quoted, setQuoted] = useState("");
   const [status, setStatus] = useState<Status>({ kind: "idle" });
   const headingRef = useRef<HTMLHeadingElement>(null);
+  const [demo, setDemo] = useState<DemoScenario | null>(null);
 
   const isGuide = service === "guide";
   const quotedNumber = Number(quoted);
@@ -129,8 +133,28 @@ export function FareCheckForm() {
     );
   }
 
+  function applyDemo(s: DemoScenario) {
+    setService(s.serviceType);
+    setPickup(s.pickup);
+    setDrop(s.drop);
+    setSession(s.sessionType);
+    // 12:00 India time today, shown in the device's own clock, so no night rate whatever the time zone.
+    setTimeMode("custom");
+    setCustomTime(toLocalInputValue(noonInIndiaToday()));
+    setQuoted(String(s.quotedPrice));
+    setStatus({ kind: "idle" });
+    setDemo(s);
+    queueMicrotask(() => document.querySelector<HTMLButtonElement>("button[type=submit]")?.scrollIntoView({ behavior: "smooth", block: "center" }));
+  }
+
   return (
     <div className="space-y-4 px-4 pb-8">
+      <DemoPicker onPick={applyDemo} />
+      {demo && (
+        <p className="rounded-lg bg-brand/10 p-3 text-sm text-brand" role="status">
+          Demo filled in: <strong>{demo.title}</strong>. Tap &ldquo;Check this fare&rdquo;.
+        </p>
+      )}
       <form onSubmit={onSubmit} className="space-y-4" noValidate>
         <section>
           <h2 className="mb-2 text-sm font-semibold">What are you taking?</h2>

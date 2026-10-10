@@ -21,6 +21,13 @@ export function isNightTime(date: Date, start: number, end: number): boolean {
   return isNightHour(localHour(date), start, end);
 }
 
+/** 12:00 India time on today's India date, as an instant. Used by demo mode so verdicts don't depend on the clock. */
+export function noonInIndiaToday(now: Date = new Date()): Date {
+  const IST_OFFSET_MS = 5.5 * 3600_000; // India has no daylight saving
+  const ist = new Date(now.getTime() + IST_OFFSET_MS);
+  return new Date(Date.UTC(ist.getUTCFullYear(), ist.getUTCMonth(), ist.getUTCDate(), 12, 0) - IST_OFFSET_MS);
+}
+
 /** e.g. 22 → "22:00" */
 export function formatHour(hour: number): string {
   return `${String(hour).padStart(2, "0")}:00`;

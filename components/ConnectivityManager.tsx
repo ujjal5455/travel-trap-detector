@@ -46,9 +46,17 @@ export function ConnectivityManager() {
     };
   }, []);
 
-  // Keep the offline pack fresh whenever we're online.
+  // Keep the offline pack fresh whenever we're online, but after the page has loaded and gone idle,
+  // so the download never competes with what the traveller is waiting to see.
   useEffect(() => {
-    if (online) void refreshOfflinePack();
+    if (!online) return;
+    const run = () => void refreshOfflinePack();
+    if ("requestIdleCallback" in window) {
+      const id = window.requestIdleCallback(run, { timeout: 10_000 });
+      return () => window.cancelIdleCallback(id);
+    }
+    const t = setTimeout(run, 3000);
+    return () => clearTimeout(t);
   }, [online]);
 
   // Send queued reports: when back online, when the app returns to the foreground, and every 30 s while any wait.

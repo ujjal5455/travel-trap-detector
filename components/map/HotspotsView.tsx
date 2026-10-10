@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
+import { preconnect } from "react-dom";
 import { apiJson } from "@/lib/client/api";
 import { HOTSPOTS } from "@/lib/config";
 import { hotspotLevel } from "@/lib/hotspots";
@@ -17,31 +18,45 @@ const HotspotMap = dynamic(() => import("./HotspotMap"), {
 /** Central Guwahati: the fallback when location isn't shared. */
 const GUWAHATI: LatLng = { lat: 26.1806, lng: 91.7539 };
 
-type LocationState = "asking" | "yours" | "fallback";
+type LocationState = "guwahati" | "asking" | "yours" | "unavailable";
 type Load = { for: string; data?: HotspotsResponse; error?: string };
 
 export function HotspotsView() {
+  // Start fetching the first map tiles' server while the map code loads.
+  preconnect("https://tile.openstreetmap.org");
+
   const [service, setService] = useState<ServiceType | null>(null);
   const [center, setCenter] = useState<LatLng>(GUWAHATI);
-  const [location, setLocation] = useState<LocationState>("asking");
+  const [location, setLocation] = useState<LocationState>("guwahati");
   const [load, setLoad] = useState<Load | null>(null);
   const [retry, setRetry] = useState(0);
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   // Centre on the traveller if they allow it. The position stays in the browser; it is never sent to the server.
-  useEffect(() => {
+  function locate() {
     if (!("geolocation" in navigator)) {
-      queueMicrotask(() => setLocation("fallback"));
+      setLocation("unavailable");
       return;
     }
+    setLocation("asking");
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         setCenter({ lat: pos.coords.latitude, lng: pos.coords.longitude });
         setLocation("yours");
       },
-      () => setLocation("fallback"),
+      () => setLocation("unavailable"),
       { timeout: 8000, maximumAge: 10 * 60 * 1000 },
     );
+  }
+
+  // Use the location straight away only if permission was already given; never prompt on page load.
+  useEffect(() => {
+    navigator.permissions
+      ?.query({ name: "geolocation" })
+      .then((status) => {
+        if (status.state === "granted") locate();
+      })
+      .catch(() => undefined);
   }, []);
 
   const key = `${service ?? "all"}#${retry}`;
@@ -81,11 +96,24 @@ export function HotspotsView() {
         ))}
       </div>
 
-      <p className="text-xs text-muted" aria-live="polite">
-        {location === "asking" && "Showing Guwahati while we ask for your location…"}
-        {location === "yours" && "Centred on your location. It stays on your phone and isn't sent anywhere."}
-        {location === "fallback" && "Showing Guwahati. Allow location access to centre the map on you."}
-      </p>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="text-xs text-muted" aria-live="polite">
+          {location === "guwahati" && "Showing Guwahati."}
+          {location === "asking" && "Finding your location…"}
+          {location === "yours" && "Centred on your location. It stays on your phone and isn't sent anywhere."}
+          {location === "unavailable" && "Couldn't get your location, so showing Guwahati."}
+        </p>
+        {location !== "yours" && (
+          <button
+            type="button"
+            onClick={locate}
+            disabled={location === "asking"}
+            className="min-h-11 rounded-lg border-2 border-line px-3 text-sm font-medium disabled:opacity-50"
+          >
+            <span aria-hidden="true">📍 </span>Use my location
+          </button>
+        )}
+      </div>
 
       <HotspotMap center={center} hotspots={hotspots} selectedId={selectedId} />
 

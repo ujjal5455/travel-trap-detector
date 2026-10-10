@@ -12,9 +12,9 @@
   --color-line: #e7e5e4;
 
   /* Verdict colours: always paired with an icon and a text label, never used alone. */
-  --color-fair: #15803d;
+  --color-fair: #166534;
   --color-fair-soft: #dcfce7;
-  --color-suspicious: #b45309;
+  --color-suspicious: #92400e;
   --color-suspicious-soft: #fef3c7;
   --color-risk: #b91c1c;
   --color-risk-soft: #fee2e2;
@@ -22,6 +22,28 @@
 
 html {
   -webkit-text-size-adjust: 100%;
+}
+
+/* Visible keyboard focus everywhere (mouse and touch clicks don't trigger :focus-visible). */
+:focus-visible {
+  outline: 3px solid var(--color-brand);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Text fields show focus through their container's border instead. */
+.focus-within\:border-brand:focus-within :focus-visible {
+  outline: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 body {

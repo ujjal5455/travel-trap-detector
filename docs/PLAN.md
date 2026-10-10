@@ -230,11 +230,18 @@ Library choice: **Serwist 9.5 (`@serwist/turbopack` + `serwist`)**. It is active
 Notes: a refused connection takes ~2 s to fail on Windows, so the server-down fallback isn't instant; DevTools Offline is. Service worker is disabled in `npm run dev`; test offline with `npm run build && npm start`.
 
 ### Phase 11: Polish and demo mode
-- [ ] `app/about/page.tsx`: algorithm, thresholds rendered from `lib/config.ts`, data sources, limitations (device-ID spoofing, demo estimates, Nominatim limits)
-- [ ] Demo mode (D4)
-- [ ] Loading, empty and error states. Accessibility pass (44 px targets, contrast, labels, never colour alone)
-- [ ] `docs/DEMO.md` (judge walkthrough script)
-- [ ] Commit `phase 11: polish and demo mode`
+Built to the user's phase 11 spec.
+
+- [x] `/about`: plain-language steps, formulas and thresholds rendered from `lib/config.ts` (a test renders the page and checks the config values appear), data sources with honesty labels, privacy, known limitations
+- [x] Demo mode: "Try a demo" on the home page fills the form (service, places, 12:00 India time via `noonInIndiaToday`, quote). Four scenarios in `lib/demo-scenarios.ts`: fair auto (Fancy Bazaar → Kamakhya ₹130), suspicious airport taxi (ISBT → airport ₹750; the pickup avoids the airport hotspot, which would escalate), high-risk station ride (₹400), Kaziranga full-day guide (₹2,400 → Suspicious). Quotes chosen to hold with road or estimated distance; unit-tested both ways and verified live.
+- [x] Accessibility: global `:focus-visible` ring, reduced-motion support, fair/suspicious colours darkened for margin (6.5:1 and 6.4:1 on their tints; every colour pair ≥ 4.5:1), DOM audit of the verdict card, report form (scam mode) and map popup: no unnamed controls
+- [x] Performance: `experimental.inlineCss` (no render-blocking CSS; pages 10–25 KB gzipped), offline pack fetched when idle, map no longer asks for location on load ("Use my location" button; auto-centres only if already granted), preconnect to the OSM tile server
+- [x] Lighthouse mobile (production build): home 92 / 100 / 100 / 100, about 98 / 100 / 100 / 100, report 99 / 100 / 100 / 100, map 88 / 100 / 96 / 100 (perf / a11y / best practices / SEO). Map LCP is a third-party OSM tile, and its remaining best-practice item is OSM's low-resolution tiles.
+- [x] README: what it is, setup, env vars, scripts, Mermaid architecture diagram (checked with Mermaid 11), scoring, data honesty, privacy, limitations, quality, a 2-minute demo script
+- [x] 255 tests pass
+- [x] Commit `phase 11: polish and demo mode`
+
+Not fixed (by design or third party): API JSON isn't gzipped by `next start` locally (Vercel compresses responses); 13 KiB of legacy polyfills in a framework chunk.
 
 ### Phase 12: Deploy
 - [ ] Vercel project, env vars set (server-only)
@@ -379,4 +386,4 @@ on conflict (id) do nothing;
 ---
 
 ## Next up
-Phase 11: polish and demo mode. Decisions D2 to D8 are treated as accepted unless changed.
+Phase 12: deploy to Vercel. Decisions D2 to D8 are treated as accepted unless changed.
