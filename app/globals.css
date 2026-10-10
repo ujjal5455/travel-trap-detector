@@ -1,0 +1,30 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: var(--font-noto-sans), ui-sans-serif, system-ui, sans-serif;
+
+  --color-brand: #0f766e;
+  --color-brand-strong: #115e59;
+  --color-surface: #ffffff;
+  --color-canvas: #f6f7f5;
+  --color-ink: #1c1917;
+  --color-muted: #57534e;
+  --color-line: #e7e5e4;
+
+  /* Verdict colours: always paired with an icon and a text label, never used alone. */
+  --color-fair: #15803d;
+  --color-fair-soft: #dcfce7;
+  --color-suspicious: #b45309;
+  --color-suspicious-soft: #fef3c7;
+  --color-risk: #b91c1c;
+  --color-risk-soft: #fee2e2;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background: var(--color-canvas);
+  color: var(--color-ink);
+}
