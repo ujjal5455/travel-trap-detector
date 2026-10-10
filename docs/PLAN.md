@@ -174,12 +174,21 @@ Built to the user's phase 6 spec, on Groq rather than the paid Anthropic API (de
 Change to D2: per the phase 6 spec, `/api/explain` takes the verdict from the browser instead of a `checkId`. Mitigations: bounded schema (≤ 12 reasons × 400 chars), the prompt treats the JSON as data, the reply must pass the number guard and the wording filter, and the text is shown only to the person who sent it. `fare_checks.explanation` is currently unused. No rate limit on `/api/explain`: abuse only uses up the free Groq quota, after which the template is served.
 
 ### Phase 7: Reports
-- [ ] `app/api/reports/route.ts`: POST multipart, zod, 5 reports/hour/device, photo is jpeg/png/webp up to 2 MB, saved to the private `evidence` bucket; GET recent (no photo URLs)
-- [ ] `app/api/reports/[id]/vote/route.ts` (one vote per device)
-- [ ] `components/report/*`: fare vs scam modes, scam tag picker, photo input with client-side compression to about 1 MB
-- [ ] `app/report/page.tsx`, prefilled from the verdict card
-- [ ] UI shows only "Evidence attached". No driver names, phone numbers or registration numbers anywhere.
-- [ ] Commit `phase 7: reports`
+Built to the user's phase 7 spec. Photo upload uses a server-issued signed upload URL (user's choice; documented exception in docs/SPEC.md).
+
+- [x] `lib/redact.ts`: removes phone numbers (8+ digits with separators) and Indian plates (state-code series, BH series) from descriptions, without touching prices or distances + 18 tests
+- [x] `lib/validation.ts` `reportRequestSchema` (paid price unless scam; ≥1 tag for scams, none otherwise; 280-char description; photo path must match the issued shape) + tests
+- [x] `lib/rate-limit.ts` `MemoryRateLimiter` (upload URLs: 10/hour/device per instance) + tests
+- [x] `lib/nearby.ts` `toNearbyReports` (exact 1 km radius, newest first, vote counts, `isMine` / `votedByMe`, never device IDs or photo paths) + tests
+- [x] `POST /api/reports/upload-url`: path `<device>/<uuid>.jpg`, refused once the 5/hour report limit is hit
+- [x] `POST /api/reports`: zod, 5/hour/device, photo must belong to the device and exist in storage, ORS distance, area, redaction, 201 `{ id, redacted }`
+- [x] `GET /api/reports/nearby?lat=&lng=`: last 180 days within 1 km, max 20
+- [x] `POST /api/reports/[id]/vote`: 201, 409 duplicate (report_votes primary key), 403 own report, 404 unknown
+- [x] UI: `components/report/*` (form, tag chips, photo input compressing to < 300 KB and dropping EXIF, nearby list with "Me too", thank-you screen), `components/ui/PriceInput.tsx`, `YesNo.tsx`; form is client-only so it can read the draft from sessionStorage; "Report what I paid" hands over the trip without putting coordinates in the URL
+- [x] Verified live on a production build: new report in nearby results; second vote 409; 6th report 429; signed upload 200; public photo URL 400; redaction; full UI flow at 375 px
+- [x] Commit `phase 7: community reports`
+
+Test data left in Supabase (for the user to delete): reports from devices `7e57de71-…` and descriptions starting "TEST", plus their photos in the `evidence` bucket.
 
 ### Phase 8: Hotspot map
 - [ ] `lib/hotspots.ts`: grid clustering of `is_scam` reports (last 90 days), counts, distinct devices, top tags + tests
@@ -351,4 +360,4 @@ on conflict (id) do nothing;
 ---
 
 ## Next up
-Phase 7 built and verified (see commit); next: phase 8 hotspot map. Decisions D2 to D8 are treated as accepted unless changed.
+Phase 8: hotspot map. Decisions D2 to D8 are treated as accepted unless changed.
