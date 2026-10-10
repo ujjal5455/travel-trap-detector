@@ -186,8 +186,19 @@ export interface Explanation {
   source: "template" | "ai";
 }
 
+/** GET /api/offline-pack: saved on the device for offline fare checks. */
+export interface OfflinePack {
+  version: 1;
+  savedAt: string;
+  areas: Area[];
+  places: Place[];
+  benchmarks: FareBenchmark[];
+}
+
 /** POST /api/check response */
 export interface CheckResponse {
+  /** true when computed in the browser without a connection (no community data, estimated distance) */
+  offline?: boolean;
   /** fare_checks row id; null if logging failed (the verdict is still valid) */
   checkId: string | null;
   verdict: FareVerdict;

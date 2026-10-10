@@ -1,3 +1,4 @@
+import { withSerwist } from "@serwist/turbopack";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
@@ -15,4 +16,5 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+// withSerwist keeps esbuild out of the server bundle; it builds the service worker at request/build time.
+export default withSerwist(nextConfig);

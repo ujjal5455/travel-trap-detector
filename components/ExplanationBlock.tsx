@@ -6,10 +6,20 @@ import { apiJson } from "@/lib/client/api";
 import { EXPLANATION } from "@/lib/config";
 import type { Explanation, FareVerdict } from "@/lib/types";
 
-export function ExplanationBlock({ verdict, fallback }: { verdict: FareVerdict; fallback: Explanation }) {
+export function ExplanationBlock({
+  verdict,
+  fallback,
+  skipAi = false,
+}: {
+  verdict: FareVerdict;
+  fallback: Explanation;
+  /** Offline results use the template straight away; there is no server to ask. */
+  skipAi?: boolean;
+}) {
   const [loaded, setLoaded] = useState<{ for: FareVerdict; explanation: Explanation } | null>(null);
 
   useEffect(() => {
+    if (skipAi) return;
     let cancelled = false;
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), EXPLANATION.clientTimeoutMs);
@@ -22,9 +32,9 @@ export function ExplanationBlock({ verdict, fallback }: { verdict: FareVerdict; 
       clearTimeout(timer);
       ctrl.abort();
     };
-  }, [verdict, fallback]);
+  }, [verdict, fallback, skipAi]);
 
-  const explanation = loaded?.for === verdict ? loaded.explanation : null;
+  const explanation = skipAi ? fallback : loaded?.for === verdict ? loaded.explanation : null;
 
   return (
     <section className="rounded-xl bg-canvas p-3 text-sm" aria-labelledby="explain-title" aria-busy={!explanation}>

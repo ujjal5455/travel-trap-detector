@@ -6,11 +6,14 @@ import { PlacePicker } from "@/components/PlacePicker";
 import { parsePrice, PriceInput } from "@/components/ui/PriceInput";
 import { YesNo } from "@/components/ui/YesNo";
 import { ApiError, apiJson } from "@/lib/client/api";
+import { isNetworkError, isOffline, reportNetworkOk, reportNetworkProblem } from "@/lib/client/connectivity";
 import { clearReportDraft, loadReportDraft } from "@/lib/client/report-draft";
+import { enqueueReport } from "@/lib/client/report-queue";
 import { REPORTS } from "@/lib/config";
 import type { CreateReportResponse, PlaceChoice, ScamTag, ServiceType, SessionType, UploadUrlResponse } from "@/lib/types";
 import { NearbyReports } from "./NearbyReports";
 import { PhotoInput } from "./PhotoInput";
+import { SavedOffline } from "./SavedOffline";
 import { ScamTagPicker } from "./ScamTagPicker";
 import { ThankYou } from "./ThankYou";
 
@@ -18,7 +21,8 @@ type Status =
   | { kind: "idle" }
   | { kind: "sending"; step: string }
   | { kind: "error"; message: string }
-  | { kind: "done"; id: string; redacted: boolean; pickup: PlaceChoice };
+  | { kind: "done"; id: string; redacted: boolean; pickup: PlaceChoice }
+  | { kind: "queued"; hadPhoto: boolean };
 
 async function uploadPhoto(photo: Blob): Promise<string> {
   const { path, signedUrl } = await apiJson<UploadUrlResponse>("/api/reports/upload-url", { method: "POST" });
@@ -63,6 +67,31 @@ export function ReportForm() {
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (missing.length || !service || !pickup || isScam === null) return;
+    const payload = {
+      serviceType: service,
+      pickup: { lat: pickup.lat, lng: pickup.lng },
+      ...(isGuide ? { sessionType: session } : { drop: drop ? { lat: drop.lat, lng: drop.lng } : undefined }),
+      quotedPrice,
+      paidPrice,
+      feltFair: feltFair ?? undefined,
+      isScam,
+      scamTags: isScam ? tags : [],
+      description: description.trim() || undefined,
+    };
+
+    // No connection: keep it on the phone; ConnectivityManager sends it when the connection returns.
+    const saveForLater = async () => {
+      try {
+        await enqueueReport(JSON.parse(JSON.stringify(payload)) as Record<string, unknown>, photo);
+        clearReportDraft();
+        setStatus({ kind: "queued", hadPhoto: photo !== null });
+        window.scrollTo({ top: 0 });
+      } catch (err) {
+        setStatus({ kind: "error", message: err instanceof Error ? err.message : "Couldn't save the report on this phone." });
+      }
+    };
+    if (isOffline()) return saveForLater();
+
     try {
       let photoPath: string | undefined;
       if (photo) {
@@ -72,23 +101,17 @@ export function ReportForm() {
       setStatus({ kind: "sending", step: "Saving your report…" });
       const res = await apiJson<CreateReportResponse>("/api/reports", {
         method: "POST",
-        body: JSON.stringify({
-          serviceType: service,
-          pickup: { lat: pickup.lat, lng: pickup.lng },
-          ...(isGuide ? { sessionType: session } : { drop: drop ? { lat: drop.lat, lng: drop.lng } : undefined }),
-          quotedPrice,
-          paidPrice,
-          feltFair: feltFair ?? undefined,
-          isScam,
-          scamTags: isScam ? tags : [],
-          description: description.trim() || undefined,
-          photoPath,
-        }),
+        body: JSON.stringify({ ...payload, photoPath }),
       });
+      reportNetworkOk();
       clearReportDraft();
       setStatus({ kind: "done", id: res.id, redacted: res.redacted, pickup });
       window.scrollTo({ top: 0 });
     } catch (err) {
+      if (isNetworkError(err)) {
+        reportNetworkProblem();
+        return saveForLater();
+      }
       const message =
         err instanceof ApiError
           ? err.status === 400
@@ -99,6 +122,10 @@ export function ReportForm() {
             : "We couldn't reach the server. Check your connection.";
       setStatus({ kind: "error", message });
     }
+  }
+
+  if (status.kind === "queued") {
+    return <SavedOffline hadPhoto={status.hadPhoto} />;
   }
 
   if (status.kind === "done") {

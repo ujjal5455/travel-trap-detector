@@ -7,6 +7,7 @@ import { ExplanationBlock } from "@/components/ExplanationBlock";
 import { formatINR, formatKm, formatRatio } from "@/lib/format";
 import { CONFIDENCE_LABELS, SOURCE_LABELS, VERDICT_LABELS } from "@/lib/labels";
 import { saveReportDraft } from "@/lib/client/report-draft";
+import { OFFLINE_LABEL } from "@/lib/offline-check";
 import type { CheckResponse, ReportDraft, Verdict } from "@/lib/types";
 
 // Loaded on first open, so the card (and its Indic fonts) cost nothing until needed.
@@ -84,6 +85,13 @@ export function VerdictCard({
         </div>
       </header>
 
+      {result.offline && (
+        <p role="note" className="flex items-center gap-2 border-b-2 border-line bg-ink px-4 py-2 text-sm font-semibold text-white">
+          <span aria-hidden="true">📴</span>
+          {OFFLINE_LABEL}
+        </p>
+      )}
+
       <div className="space-y-4 px-4 py-4">
         <div>
           <p className="text-sm text-muted">Fair price</p>
@@ -116,7 +124,7 @@ export function VerdictCard({
           </ul>
         </section>
 
-        <ExplanationBlock verdict={v} fallback={explanation} />
+        <ExplanationBlock verdict={v} fallback={explanation} skipAi={result.offline === true} />
 
         <div className="grid gap-2">
           <button

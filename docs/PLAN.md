@@ -21,7 +21,7 @@ Status legend: `[x]` done, `[ ]` to do. Each phase ends with: lint, typecheck, t
 | D0 | **Zero spending.** Only free, no-card services: Supabase Free, Vercel Hobby, ORS free key, Groq free, Nominatim, OSM tiles. Every external dependency has a free fallback. | **Agreed**, in docs/SPEC.md |
 | D9 | Area IDs are text slugs (`'guwahati'`), other IDs are UUIDs. Geo queries use a bounding box plus haversine in code, so no PostGIS. | Agreed |
 | D10 | The night window is computed in `Asia/Kolkata`, because the server runs in UTC. | Agreed |
-| D11 | Hand-written `public/sw.js` (next-pwa/Serwist don't fit Next 16 with Turbopack). Lint runs `eslint .` because `next lint` was removed in Next 16. | Agreed |
+| D11 | Service worker via Serwist 9.5 with its Turbopack integration (chosen in phase 10 after a compatibility check). Lint runs `eslint .` because `next lint` was removed in Next 16. | Agreed |
 
 Versions at planning time (2026-10-10): Next 16.4, Tailwind 4.3, react-leaflet 5, @supabase/supabase-js 2.117, zod 4.6, Vitest 5.
 
@@ -213,12 +213,21 @@ Built to the user's phase 9 spec.
 
 Note: place names stay in English (they come from OSM / the seed list).
 
-### Phase 10: Offline / PWA
-- [ ] `app/manifest.ts`, icons
-- [ ] `public/sw.js`: precache shell, stale-while-revalidate for `/api/offline-pack`, network-only for other API calls
-- [ ] `app/api/offline-pack/route.ts`, `lib/client/offline-store.ts`
-- [ ] Offline fare check: browser runs `scoreFare` with benchmark + haversine x 1.3, labelled "Offline estimate"
-- [ ] Commit `phase 10: offline pwa`
+### Phase 10: PWA and offline fallback
+Built to the user's phase 10 spec.
+
+Library choice: **Serwist 9.5 (`@serwist/turbopack` + `serwist`)**. It is actively maintained (released 2026-10-04), supports Next ≥ 14, and has a Turbopack integration, which matters because Next 16 builds with Turbopack. Rejected: `next-pwa` (unmaintained since 2022), `@ducanh2912/next-pwa` (deprecated in favour of Serwist, webpack-only), hand-rolled Workbox (more code to own). Compatibility issue found and fixed: Serwist's route exports `dynamic`, `dynamicParams` and `revalidate`, which Next 16 removes under Cache Components, so `app/serwist/[path]/route.ts` re-exports only `GET` and `generateStaticParams`. `reloadOnOnline` is turned off so coming back online doesn't wipe the screen or race the report queue.
+
+- [x] `app/manifest.ts` (name, short name, standalone, portrait, theme #0f766e), original icons from `public/icons/icon.svg` via `npm run icons` (192, 512, maskable 512 with safe zone, apple-touch 180), metadata (apple web app, icons)
+- [x] `app/sw.ts` + `app/serwist/[path]/route.ts`: precache the app shell (all static pages + `/~offline` fallback, versioned by git commit), Serwist default runtime caching (static assets, same-origin GET /api network-first, map tiles); `app/~offline/page.tsx`
+- [x] `GET /api/offline-pack` (areas, places, benchmarks) saved to localStorage (`lib/client/offline-store.ts`, refreshed every 6 h while online); place picker falls back to it
+- [x] `lib/offline-check.ts`: `scoreFare` in the browser with Haversine × 1.3, the saved benchmark, no community data, template explanation, an extra reason, `offline: true` + 6 tests; used when `navigator.onLine` is false or the request fails with a network error; the verdict card shows "Offline estimate, community data not included" and skips /api/explain
+- [x] `lib/client/report-queue.ts`: offline reports (photo kept as a data URL, max 5) saved and sent oldest-first when back online, on app start, on return to the foreground and every 30 s; invalid ones dropped, others retried + 6 tests; "Report saved on your phone" screen
+- [x] `components/ConnectivityManager.tsx`: offline banner (also when the server is unreachable), queued count, "sent" notice
+- [x] Verified on a production build: installable (manifest, icons, SW active and controlling, 40 precache entries, pack saved). With the server stopped: pages load from cache, a fare check returns the labelled offline estimate, a report is queued; after restarting, the queued report was sent and appears on the server. With `navigator.onLine` false (the DevTools Offline case) the estimate is instant (26 ms) and the banner shows.
+- [x] Commit `phase 10: pwa and offline fallback`
+
+Notes: a refused connection takes ~2 s to fail on Windows, so the server-down fallback isn't instant; DevTools Offline is. Service worker is disabled in `npm run dev`; test offline with `npm run build && npm start`.
 
 ### Phase 11: Polish and demo mode
 - [ ] `app/about/page.tsx`: algorithm, thresholds rendered from `lib/config.ts`, data sources, limitations (device-ID spoofing, demo estimates, Nominatim limits)
@@ -370,4 +379,4 @@ on conflict (id) do nothing;
 ---
 
 ## Next up
-Phase 10: offline / PWA. Decisions D2 to D8 are treated as accepted unless changed.
+Phase 11: polish and demo mode. Decisions D2 to D8 are treated as accepted unless changed.

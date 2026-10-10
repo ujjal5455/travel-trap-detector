@@ -4,6 +4,9 @@ import { useEffect, useRef, useState } from "react";
 import { PlacePicker } from "@/components/PlacePicker";
 import { VerdictCard } from "@/components/VerdictCard";
 import { ApiError, apiJson } from "@/lib/client/api";
+import { isNetworkError, isOffline, reportNetworkOk, reportNetworkProblem } from "@/lib/client/connectivity";
+import { loadOfflinePack } from "@/lib/client/offline-store";
+import { offlineCheck } from "@/lib/offline-check";
 import type { CheckResponse, PlaceChoice, ReportDraft, ServiceType, SessionType } from "@/lib/types";
 import { ServicePicker } from "./ServicePicker";
 
@@ -70,12 +73,42 @@ export function FareCheckForm() {
     }
   }, [status]);
 
+  /** Offline estimate from the pack saved on this phone; false if there's no pack yet. */
+  function sendOffline(payload: CheckPayload, draft: ReportDraft): boolean {
+    const pack = loadOfflinePack();
+    if (!pack) return false;
+    try {
+      setStatus({ kind: "done", result: offlineCheck(pack, payload), draft });
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   async function send(payload: CheckPayload, draft: ReportDraft) {
+    const noPack: Status = {
+      kind: "error",
+      message: "You're offline, and the rates haven't been saved on this phone yet. Open the app once with a connection.",
+      retryable: true,
+      payload,
+      draft,
+    };
+    if (isOffline()) {
+      if (!sendOffline(payload, draft)) setStatus(noPack);
+      return;
+    }
     setStatus({ kind: "loading" });
     try {
       const result = await apiJson<CheckResponse>("/api/check", { method: "POST", body: JSON.stringify(payload) });
+      reportNetworkOk();
       setStatus({ kind: "done", result, draft });
     } catch (err) {
+      // Network down (or server unreachable): fall back to the offline estimate.
+      if (isNetworkError(err)) {
+        reportNetworkProblem();
+        if (!sendOffline(payload, draft)) setStatus(noPack);
+        return;
+      }
       setStatus({ kind: "error", ...describeError(err), payload, draft });
     }
   }

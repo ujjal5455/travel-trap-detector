@@ -11,7 +11,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "check": "npm run lint && npm run typecheck && npm run test",
-    "db:check": "tsx scripts/check-db.ts"
+    "db:check": "tsx scripts/check-db.ts",
+    "icons": "node scripts/generate-icons.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.117.3",
@@ -24,13 +25,16 @@
     "zod": "^4.6.5"
   },
   "devDependencies": {
+    "@serwist/turbopack": "^9.5.13",
     "@tailwindcss/turbopack": "^4",
     "@types/leaflet": "^1.9.22",
     "@types/node": "^24.19.2",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "esbuild": "^0.28.2",
     "eslint": "^9",
     "eslint-config-next": "16.4.0",
+    "serwist": "^9.5.13",
     "tailwindcss": "^4",
     "tsx": "^4.23.15",
     "typescript": "^5",
