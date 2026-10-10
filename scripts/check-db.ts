@@ -5,6 +5,7 @@
 // Creates its own client instead of importing lib/supabase-server.ts, because the
 // `server-only` guard in that file throws outside Next.js.
 import { createClient } from "@supabase/supabase-js";
+import { normalizeSupabaseUrl } from "../lib/supabase-url";
 
 const EXPECTED: Record<string, { seed: number; exact: boolean }> = {
   areas: { seed: 5, exact: true },
@@ -39,21 +40,39 @@ async function main() {
     process.exit(1);
   }
 
-  const db = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
+  let projectUrl: string;
+  try {
+    projectUrl = normalizeSupabaseUrl(url);
+  } catch (err) {
+    console.error((err as Error).message);
+    process.exit(1);
+  }
+  if (projectUrl !== url.trim().replace(/\/+$/, "")) {
+    console.log(`Note: SUPABASE_URL should be just ${projectUrl} (without /rest/v1). Using that.\n`);
+  }
+
+  const db = createClient(projectUrl, key, { auth: { persistSession: false, autoRefreshToken: false } });
   let problems = 0;
 
-  console.log(`Supabase: ${new URL(url).host}\n`);
+  console.log(`Supabase: ${new URL(projectUrl).host}\n`);
   console.log("table              rows   expected   status");
   console.log("-----------------  -----  ---------  ------");
   for (const [table, exp] of Object.entries(EXPECTED)) {
-    const { count, error } = await db.from(table).select("*", { count: "exact", head: true });
-    if (error) {
+    // HEAD requests carry no error body, so a failure can show up only as a null count.
+    const { count, error, status } = await db.from(table).select("*", { count: "exact", head: true });
+    if (error || count === null) {
       problems++;
-      const hint = /could not find|does not exist/i.test(error.message) ? " (run 001_init.sql first)" : "";
-      console.log(`${table.padEnd(17)}  ERROR  ${error.message}${hint}`);
+      const message = error?.message || `HTTP ${status}, no count returned`;
+      const hint =
+        status === 404 || /could not find|does not exist/i.test(message)
+          ? " (table missing: run 001_init.sql, or check SUPABASE_URL)"
+          : status === 401 || status === 403
+            ? " (check SUPABASE_SECRET_KEY, and that 001_init.sql granted service_role)"
+            : "";
+      console.log(`${table.padEnd(17)}  ERROR  ${message}${hint}`);
       continue;
     }
-    const n = count ?? 0;
+    const n = count;
     const ok = exp.exact ? n === exp.seed : n >= exp.seed;
     if (!ok) problems++;
     const expected = exp.exact ? `${exp.seed}` : `>= ${exp.seed}`;

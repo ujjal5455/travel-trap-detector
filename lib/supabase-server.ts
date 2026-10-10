@@ -3,6 +3,7 @@
 // the window check is a second guard at runtime.
 import "server-only";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { normalizeSupabaseUrl } from "./supabase-url";
 
 if (typeof window !== "undefined") {
   throw new Error("lib/supabase-server.ts must never be imported in the browser.");
@@ -20,7 +21,7 @@ export function getSupabase(): SupabaseClient {
     throw new Error("SUPABASE_URL and SUPABASE_SECRET_KEY must be set. See .env.example.");
   }
 
-  client = createClient(url, secretKey, {
+  client = createClient(normalizeSupabaseUrl(url), secretKey, {
     auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
   });
   return client;
